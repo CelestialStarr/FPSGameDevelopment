@@ -3,7 +3,7 @@ using System.Collections;
 
 public class Knife : MonoBehaviour
 {
-    [Header("Knife Settings")] public string weaponName = "Kitchen Knife"; public int damage = 50; public float attackRange = 2f; public float attackRate = 0.5f; // 每秒可以挥刀2次 
+    [Header("Knife Settings")] public string weaponName = "Kitchen Knife"; public int damage = 50; public float attackRange = 2f; public float attackRate = 0.1f; // 每秒可以挥刀2次 
 
     [HideInInspector]
     public float attackCounter;
@@ -44,31 +44,32 @@ public class Knife : MonoBehaviour
     {
         if (attackCounter <= 0)
         {
-            // 播放挥刀动画 
+            // 播放挥刀动画（使用SimpleKnifeAnimation）
+            SimpleKnifeAnimation knifeAnim = GetComponent<SimpleKnifeAnimation>();
+            if (knifeAnim != null)
+            {
+                knifeAnim.PlayAnimation();
+            }
+
+            // 播放Animator动画（如果你有Animator）
             if (knifeAnimator != null)
             {
                 knifeAnimator.SetTrigger("Attack");
             }
 
-            // 播放音效 
+            // 播放音效
             if (slashSound != null && audioSource != null)
             {
                 audioSource.PlayOneShot(slashSound);
             }
 
-            // 检测攻击范围内的敌人 
+            // 检测攻击范围内的敌人
             PerformAttack();
 
-            // 重置攻击计时器 
+            // 重置攻击计时器
             attackCounter = attackRate;
         }
-        if (knifeSwing != null)
-        {
-            knifeSwing.PlaySwingAnimation();
-        }
-
     }
-
     void PerformAttack()
     {
         // 检测前方扇形区域内的敌人 
