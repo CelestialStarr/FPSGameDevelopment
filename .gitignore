@@ -29,7 +29,9 @@ Thumbs.db
 # ================= #
 .vscode/
 .idea/
-.vs/                # Visual Studio
+.vs/                
+
+# Visual Studio
 
 *.csproj
 *.unityproj
