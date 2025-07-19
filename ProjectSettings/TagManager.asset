@@ -9,6 +9,7 @@ TagManager:
   - headShot
   - Ammo
   - Health
+  - Ladder
   layers:
   - Default
   - TransparentFX

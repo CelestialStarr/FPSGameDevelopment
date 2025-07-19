@@ -34,6 +34,14 @@ public class PlayerHealthController : MonoBehaviour
        
     }
 
+    public void UpdateHealthUI()
+    {
+        UIController.Instance.healthSlider.maxValue = maxHealth;
+        UIController.Instance.healthSlider.value = currentHealth;
+        UIController.Instance.healthText.text = "Health: " + currentHealth + "/" + maxHealth;
+    }
+
+
     public void DamagePlayer(int damage)
     {
         if(invCounter <=0)

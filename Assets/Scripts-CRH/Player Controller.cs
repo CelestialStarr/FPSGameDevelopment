@@ -30,6 +30,12 @@ public class PlayerController : MonoBehaviour
         instance = this;
     }
 
+    // 在PlayerController.cs中添加这个公共方法
+    public void SetJumpVelocity(float jumpVelocity)
+    {
+        moveInput.y = jumpVelocity;
+    }
+
     void Start()
     {
         anim = GetComponent<Animator>();
