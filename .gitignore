@@ -1,6 +1,6 @@
-# =============== #
-# Unity Generated #
-# =============== #
+# ====================== #
+# Unity Generated Files  #
+# ====================== #
 [Ll]ibrary/
 [Tt]emp/
 [Oo]bj/
@@ -8,6 +8,9 @@
 [Bb]uilds/
 [Ll]ogs/
 [Mm]emoryCaptures/
+UserSettings/
+
+# Asset Files
 Assets/FPS Asset/
 Assets/Kitchen_Cooking_FX/
 Assets/Meat_Pack/
@@ -15,20 +18,21 @@ Assets/Real Materials/
 Assets/Soviet Retro Kitchen/
 Assets/SuburbNeighborhoodHousePack/
 
-
-# Uncomment if using Unity Cloud Build
-[Uu]serSettings/
-
 # ============ #
 # OS Specific  #
 # ============ #
 .DS_Store
 Thumbs.db
 
-# ============ #
-# VS/JetBrains  #
-# ============ #
+# ================= #
+# IDE / Editor Files #
+# ================= #
 .vscode/
+.idea/
+.vs/                
+
+# Visual Studio
+
 *.csproj
 *.unityproj
 *.sln
@@ -43,12 +47,12 @@ Thumbs.db
 *.mdb
 *.opendb
 *.VC.db
-.idea/
 *.sln.DotSettings
+*.sln.iml
 *.vsconfig
 
 # ============ #
-# Other        #
+# Other Binaries #
 # ============ #
 *.apk
 *.aab
@@ -56,6 +60,3 @@ Thumbs.db
 
 # Crashlytics
 crashlytics-build.properties
-
-# Rider
-*.sln.iml
