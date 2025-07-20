@@ -6,6 +6,7 @@ public class MainMenuUI : MonoBehaviour
     public void StartGame()
     {
         // 加载第一关（改成你真实的第一关名字）
+        Debug.Log("Load Level1");
         SceneManager.LoadScene("Level1");
     }
 

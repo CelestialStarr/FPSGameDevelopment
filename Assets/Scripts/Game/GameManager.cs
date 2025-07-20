@@ -1,169 +1,114 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-using UnityEngine.Video;
+using UnityEngine.Audio;
 
 public class GameManager : MonoBehaviour
 {
-    public static GameManager instance;
+    public static GameManager Instance;
 
-    [Header("UI Panels")]
+    [Header("UI")]
     public GameObject pausePanel;
-    public GameObject endPanel;
-    public GameObject mainMenuPanel;
+    public Slider volumeSlider;
 
-    [Header("Timer")]
-    public Text timerText;
-    private float currentTime = 0f;
-    private bool isCounting = true;
+    [Header("Audio")]
+    public AudioMixer audioMixer;
 
-    [Header("Level Info")]
-    public float[] levelTimes = new float[3];
-    private int currentLevelIndex = 0;
-
-    [Header("Video (演出关卡)")]
-    public VideoPlayer cutscenePlayer;
+    private bool isPaused = false;
 
     void Awake()
     {
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-            SceneManager.sceneLoaded += OnSceneLoaded;
-        }
-        else
+        // 单例模式，确保唯一
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
+        // 注册场景加载事件
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    void Start()
     {
-        if (scene.name.Contains("Level"))
-        {
-            InitLevel();
-        }
+        if (volumeSlider != null)
+            SetVolume(volumeSlider.value);
 
-        if (scene.name == "Cutscene")
-        {
-            if (cutscenePlayer != null)
-            {
-                cutscenePlayer.loopPointReached += OnVideoFinished;
-                cutscenePlayer.Play();
-            }
-        }
+        ResumeGame();
     }
 
     void Update()
     {
-        if (isCounting && SceneManager.GetActiveScene().name.Contains("Level"))
-        {
-            currentTime += Time.deltaTime;
-            UpdateTimerDisplay();
-        }
+        if (!SceneManager.GetActiveScene().name.StartsWith("Level")) return;
 
-        // 测试暂停功能用（也可用 UI 按钮）
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (pausePanel != null)
-            {
-                bool isPaused = pausePanel.activeSelf;
-                if (isPaused)
-                    ResumeGame();
-                else
-                    PauseGame();
-            }
+            if (isPaused) ResumeGame();
+            else PauseGame();
         }
     }
 
-    void InitLevel()
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        currentTime = 0f;
-        isCounting = true;
-        pausePanel?.SetActive(false);
-        endPanel?.SetActive(false);
-        mainMenuPanel?.SetActive(false);
-
-        string name = SceneManager.GetActiveScene().name;
-        if (name.Contains("Level1")) currentLevelIndex = 0;
-        else if (name.Contains("Level2")) currentLevelIndex = 1;
-        else if (name.Contains("Level3")) currentLevelIndex = 2;
-    }
-
-    void UpdateTimerDisplay()
-    {
-        if (timerText != null)
+        if (!scene.name.StartsWith("Level"))
         {
-            int min = Mathf.FloorToInt(currentTime / 60f);
-            int sec = Mathf.FloorToInt(currentTime % 60f);
-            int ms = Mathf.FloorToInt((currentTime % 1f) * 100f);
-            timerText.text = $"Time: {min:00}:{sec:00}:{ms:00}";
+            // 非关卡场景，确保不暂停
+            isPaused = false;
+            Time.timeScale = 1f;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+        else
+        {
+            // 是关卡，恢复状态（防止从主菜单回来卡住）
+            ResumeGame();
         }
     }
 
     public void PauseGame()
     {
-        isCounting = false;
+        if (pausePanel == null) return;
+
+        isPaused = true;
+        pausePanel.SetActive(true);
         Time.timeScale = 0f;
-        pausePanel?.SetActive(true);
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
     public void ResumeGame()
     {
-        isCounting = true;
+        if (pausePanel == null) return;
+
+        isPaused = false;
+        pausePanel.SetActive(false);
         Time.timeScale = 1f;
-        pausePanel?.SetActive(false);
-    }
 
-    public void FinishLevel()
-    {
-        isCounting = false;
-        if (currentLevelIndex >= 0 && currentLevelIndex < levelTimes.Length)
-        {
-            levelTimes[currentLevelIndex] = currentTime;
-        }
-
-        if (currentLevelIndex < 2)
-        {
-            currentLevelIndex++;
-            SceneManager.LoadScene("Level" + (currentLevelIndex + 1));
-        }
-        else
-        {
-            // 完成三关后进入演出关
-            SceneManager.LoadScene("Cutscene");
-        }
-    }
-
-    void OnVideoFinished(VideoPlayer vp)
-    {
-        SceneManager.LoadScene("EndScene");
-    }
-
-    public void ShowFinalResults(Text endText)
-    {
-        float total = 0f;
-        string result = "Game Completed!\n\n";
-        for (int i = 0; i < levelTimes.Length; i++)
-        {
-            result += $"Level {i + 1}: {FormatTime(levelTimes[i])}\n";
-            total += levelTimes[i];
-        }
-        result += $"\nTotal Time: {FormatTime(total)}";
-        endText.text = result;
-        endPanel?.SetActive(true);
-    }
-
-    string FormatTime(float t)
-    {
-        int m = Mathf.FloorToInt(t / 60f);
-        int s = Mathf.FloorToInt(t % 60f);
-        return $"{m:00}:{s:00}";
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     public void ReturnToMainMenu()
     {
+        ResumeGame(); // 先恢复状态
         SceneManager.LoadScene("MainMenu");
+    }
+
+    public void QuitGame()
+    {
+        Debug.Log("Quit Game.");
+        Application.Quit();
+    }
+
+    public void SetVolume(float value)
+    {
+        if (value <= 0.0001f)
+            audioMixer.SetFloat("MasterVolume", -80f);
+        else
+            audioMixer.SetFloat("MasterVolume", Mathf.Log10(value) * 20f);
     }
 }
