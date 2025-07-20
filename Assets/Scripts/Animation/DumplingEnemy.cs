@@ -1,53 +1,110 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
 
 public class DumplingEnemy : MonoBehaviour
 {
     [Header("References")]
-    public Transform player;                // 玩家对象
-    public GameObject doughBall;            // 跳动的面团对象
-    public CanvasGroup wrapOverlayUI;       // 面皮 UI（CanvasGroup 控制透明）
+    public Transform player;
+    public GameObject doughBall;               // 面团模型
+    public GameObject dumplingSkin;            // 饺子形态模型
+    public CanvasGroup wrapOverlayUI;          // UI画面控制
+    public GameObject healingDumplingPrefab;   // 掉落的小饺子
+    public Transform dropPoint;                // 小饺子掉落位置
 
-    [Header("Config")]
-    public float detectRange = 15f;         // 追击启动范围
-    public float wrapRange = 2f;            // 包裹触发距离
-    public float moveSpeed = 1.5f;          // 敌人移动速度
+    [Header("Parameters")]
+    public float detectRange = 20f;
+    public float wrapRange = 2f;
+    public float moveSpeed = 2f;
+    public int hitsToTransform = 3;    // 面团被打几次才转饺子
+    public int dumplingHealth = 3;     // 饺子阶段生命值
 
+    private int currentHitCount = 0;
     private bool isChasing = false;
-    private bool hasWrapped = false;
+    private bool isWrapped = false;
+    private bool isTransformed = false;
 
     void Update()
     {
-        // 计算平面距离
-        Vector2 enemyXZ = new Vector2(transform.position.x, transform.position.z);
-        Vector2 playerXZ = new Vector2(player.position.x, player.position.z);
-        float distance = Vector2.Distance(enemyXZ, playerXZ);
+        if (player == null || isWrapped) return;
 
-        // 开始追击
-        if (!isChasing && distance <= detectRange)
+        float distance = Vector2.Distance(
+            new Vector2(transform.position.x, transform.position.z),
+            new Vector2(player.position.x, player.position.z)
+        );
+
+        if (!isTransformed)
         {
-            isChasing = true;
+            if (!isChasing && distance <= detectRange)
+                isChasing = true;
+
+            if (isChasing)
+            {
+                if (distance > wrapRange)
+                {
+                    // 追击移动
+                    Vector3 dir = player.position - transform.position;
+                    dir.y = 0;
+                    transform.position += dir.normalized * moveSpeed * Time.deltaTime;
+                }
+                else
+                {
+                    // 靠近未击杀，触发包裹UI
+                    isWrapped = true;
+                    doughBall.SetActive(false);
+                    ShowWrapUI();
+                }
+            }
         }
-
-        // 正在追击但未包裹
-        if (isChasing && !hasWrapped)
+        else
         {
-            if (distance > wrapRange)
+            // 第二阶段逻辑可在此添加远程攻击
+        }
+    }
+
+    public void TakeHit()
+    {
+        if (isWrapped) return;
+
+        if (!isTransformed)
+        {
+            currentHitCount++;
+            if (currentHitCount >= hitsToTransform)
             {
-                // 朝玩家方向移动（XZ平面）
-                Vector3 direction = player.position - transform.position;
-                direction.y = 0;
-                transform.position += direction.normalized * moveSpeed * Time.deltaTime;
+                TransformToDumpling();
             }
-            else
+        }
+        else
+        {
+            dumplingHealth--;
+            if (dumplingHealth <= 0)
             {
-                // 包裹触发逻辑
-                hasWrapped = true;
-                doughBall.SetActive(false);           // 面团消失
-                wrapOverlayUI.alpha = 1f;             // UI 显示
-                wrapOverlayUI.blocksRaycasts = true;
-                wrapOverlayUI.interactable = true;
+                DieAndDropHealing();
             }
+        }
+    }
+
+    void TransformToDumpling()
+    {
+        isTransformed = true;
+        doughBall.SetActive(false);
+        dumplingSkin.SetActive(true);
+    }
+
+    void DieAndDropHealing()
+    {
+        if (healingDumplingPrefab != null && dropPoint != null)
+        {
+            Instantiate(healingDumplingPrefab, dropPoint.position, Quaternion.identity);
+        }
+        Destroy(gameObject);
+    }
+
+    void ShowWrapUI()
+    {
+        if (wrapOverlayUI != null)
+        {
+            wrapOverlayUI.alpha = 1f;
+            wrapOverlayUI.blocksRaycasts = true;
+            wrapOverlayUI.interactable = true;
         }
     }
 }
