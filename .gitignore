@@ -10,7 +10,8 @@
 [Mm]emoryCaptures/
 UserSettings/
 
-# Asset Files
+# Asset Folders
+>>>>>>> Gun_Functions
 Assets/FPS Asset/
 Assets/Kitchen_Cooking_FX/
 Assets/Meat_Pack/

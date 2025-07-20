@@ -35,7 +35,7 @@ Material:
     RenderType: Opaque
   disabledShaderPasses:
   - MOTIONVECTORS
-  m_LockedProperties: 
+  m_LockedProperties: :m_LightmapFlags
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -129,9 +129,9 @@ Material:
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0, g: 0.9490943, b: 1, a: 1}
-    - _Color: {r: 0, g: 0.94909424, b: 1, a: 1}
-    - _EmissionColor: {r: 0.010329823, g: 0.78353804, b: 0.8069525, a: 1}
+    - _BaseColor: {r: 0.27691025, g: 0.6792453, b: 0.061943684, a: 1}
+    - _Color: {r: 0.27691022, g: 0.6792453, b: 0.061943665, a: 1}
+    - _EmissionColor: {r: 0.15390341, g: 0.49685526, b: 0.06718473, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
