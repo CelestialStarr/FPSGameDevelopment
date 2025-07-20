@@ -59,7 +59,11 @@ public class WeaponManager : MonoBehaviour
             Debug.Log($"Switched to weapon {currentWeaponIndex}: {weapons[currentWeaponIndex].name}");
         }
     }
-
+    // 获取当前武器索引
+    public int GetCurrentWeaponIndex()
+    {
+        return currentWeaponIndex;
+    }
     private void UpdateCurrentWeaponUI()
     {
         if (weapons[currentWeaponIndex] != null)

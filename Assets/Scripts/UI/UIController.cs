@@ -7,22 +7,27 @@ public class UIController : MonoBehaviour
     public static UIController Instance;
 
     [Header("Health UI")]
-    public Slider healthSlider;          // 血量滑动条
-    public Text healthText;              // 血量文字显示
+    public Slider healthSlider;
+    public Text healthText;
 
     [Header("Pick up UI")]
-    public GameObject pickupHintUI;      // 提示UI背景框
-    public Text pickupHintText;          // 提示文字内容
+    public GameObject pickupHintUI;
+    public Text pickupHintText;
 
     [Header("Weapon UI")]
-    public Text ammoText;                // 子弹数量显示
-    public Image[] weaponIcons;          // 4个武器图标（包括刀）
+    public Text ammoText;
+    public Image[] weaponIcons;
 
     [Header("Weapon Sprites")]
-    public Sprite knifeSprite;           // 刀图标
-    public Sprite carrotSprite;          // 胡萝卜图标 
-    public Sprite meatSprite;            // 肉末图标 
-    public Sprite pepperSprite;          // 辣椒图标 
+    public Sprite knifeSprite;
+    public Sprite carrotSprite;
+    public Sprite meatSprite;
+    public Sprite pepperSprite;
+
+    [Header("Death UI")]
+    public GameObject deathUIPanel;      // 死亡UI面板
+    public Text deathTitleText;          // "YOU ARE DEAD"文字
+    public Text deathCountdownText;      // 倒计时文字
 
     // 武器索引常量
     public const int CARROT_INDEX = 0;
@@ -32,7 +37,6 @@ public class UIController : MonoBehaviour
 
     private void Awake()
     {
-        // 单例赋值
         if (Instance == null)
         {
             Instance = this;
@@ -49,48 +53,36 @@ public class UIController : MonoBehaviour
         // 初始化武器图标
         if (weaponIcons != null && weaponIcons.Length >= 4)
         {
-            // 设置武器图标和默认颜色 - 新顺序：0胡萝卜 1肉 2胡椒 3刀
             if (carrotSprite != null)
                 weaponIcons[CARROT_INDEX].sprite = carrotSprite;
             else
-                weaponIcons[CARROT_INDEX].color = new Color(1f, 0.5f, 0f); // 橙色
+                weaponIcons[CARROT_INDEX].color = new Color(1f, 0.5f, 0f);
 
             if (meatSprite != null)
                 weaponIcons[MEAT_INDEX].sprite = meatSprite;
             else
-                weaponIcons[MEAT_INDEX].color = new Color(0.6f, 0.3f, 0.1f); // 棕色
+                weaponIcons[MEAT_INDEX].color = new Color(0.6f, 0.3f, 0.1f);
 
             if (pepperSprite != null)
                 weaponIcons[PEPPER_INDEX].sprite = pepperSprite;
             else
-                weaponIcons[PEPPER_INDEX].color = Color.red; // 红色
+                weaponIcons[PEPPER_INDEX].color = Color.red;
 
             if (knifeSprite != null)
                 weaponIcons[KNIFE_INDEX].sprite = knifeSprite;
             else
-                weaponIcons[KNIFE_INDEX].color = Color.gray; // 刀为灰色
+                weaponIcons[KNIFE_INDEX].color = Color.gray;
         }
 
-        // 调试信息：打印初始化状态
-        Debug.Log("=== UIController初始化完成 ===");
-        for (int i = 0; i < weaponIcons.Length; i++)
+        // 确保死亡UI开始时是隐藏的
+        if (deathUIPanel != null)
         {
-            if (weaponIcons[i] != null)
-            {
-                Debug.Log($"武器图标 {i}: {weaponIcons[i].name}, sprite: {weaponIcons[i].sprite?.name ?? "null"}");
-            }
+            deathUIPanel.SetActive(false);
         }
     }
 
-    // 更新武器显示 - 增强调试版本
     public void UpdateWeaponDisplay(string weaponName, int weaponIndex)
     {
-        Debug.Log($"=== 更新武器显示 ===");
-        Debug.Log($"武器名称: '{weaponName}'");
-        Debug.Log($"传入索引: {weaponIndex}");
-        Debug.Log($"GetWeaponIndex结果: {GetWeaponIndex(weaponName)}");
-
-        // 使用GetWeaponIndex的结果，而不是传入的weaponIndex
         int actualIndex = GetWeaponIndex(weaponName);
 
         if (weaponIcons != null && weaponIcons.Length > actualIndex)
@@ -99,28 +91,20 @@ public class UIController : MonoBehaviour
             {
                 if (weaponIcons[i] != null)
                 {
-                    // 当前武器高亮，其他半透明
                     if (i == actualIndex)
                     {
-                        // 当前武器 - 完全不透明，放大
                         if (weaponIcons[i].sprite != null)
                         {
-                            // 有sprite，保持原色但设为不透明
-                            Color spriteColor = Color.white;
-                            weaponIcons[i].color = spriteColor;
+                            weaponIcons[i].color = Color.white;
                         }
                         else
                         {
-                            // 没有sprite，使用默认颜色
-                            Color defaultColor = GetDefaultColor(i);
-                            weaponIcons[i].color = defaultColor;
+                            weaponIcons[i].color = GetDefaultColor(i);
                         }
                         weaponIcons[i].transform.localScale = Vector3.one * 1.2f;
-                        Debug.Log($"激活武器图标 {i}");
                     }
                     else
                     {
-                        // 其他武器 - 半透明，正常大小
                         Color currentColor = weaponIcons[i].color;
                         weaponIcons[i].color = new Color(currentColor.r, currentColor.g, currentColor.b, 0.3f);
                         weaponIcons[i].transform.localScale = Vector3.one;
@@ -128,82 +112,47 @@ public class UIController : MonoBehaviour
                 }
             }
         }
-        else
-        {
-            Debug.LogError($"武器索引 {actualIndex} 超出范围！weaponIcons长度: {weaponIcons?.Length ?? 0}");
-        }
     }
 
-    // 获取默认颜色
     Color GetDefaultColor(int index)
     {
         switch (index)
         {
-            case CARROT_INDEX: return new Color(1f, 0.5f, 0f); // 橙色
-            case MEAT_INDEX: return new Color(0.6f, 0.3f, 0.1f); // 棕色
-            case PEPPER_INDEX: return Color.red; // 红色
-            case KNIFE_INDEX: return Color.gray; // 灰色
+            case CARROT_INDEX: return new Color(1f, 0.5f, 0f);
+            case MEAT_INDEX: return new Color(0.6f, 0.3f, 0.1f);
+            case PEPPER_INDEX: return Color.red;
+            case KNIFE_INDEX: return Color.gray;
             default: return Color.white;
         }
     }
 
-    // 根据武器类型获取索引 - 支持你的命名方式
     public int GetWeaponIndex(string weaponName)
     {
-        Debug.Log($"正在解析武器名称: '{weaponName}'");
-
         if (string.IsNullOrEmpty(weaponName))
         {
-            Debug.LogWarning("武器名称为空！");
             return 0;
         }
 
-        // 转换为小写进行比较，避免大小写问题
         string lowerName = weaponName.ToLower();
 
-        // 支持原有的名称
         if (lowerName.Contains("carrot") || lowerName.Contains("胡萝卜"))
-        {
-            Debug.Log("识别为胡萝卜枪");
             return CARROT_INDEX;
-        }
         else if (lowerName.Contains("meat") || lowerName.Contains("肉"))
-        {
-            Debug.Log("识别为肉枪");
             return MEAT_INDEX;
-        }
         else if (lowerName.Contains("pepper") || lowerName.Contains("辣椒"))
-        {
-            Debug.Log("识别为胡椒枪");
             return PEPPER_INDEX;
-        }
         else if (lowerName.Contains("knife") || lowerName.Contains("刀"))
-        {
-            Debug.Log("识别为刀");
             return KNIFE_INDEX;
-        }
-        // 支持你的gun1, gun2, gun3命名方式
         else if (lowerName == "gun1" || lowerName == "gun")
-        {
-            Debug.Log("识别为胡萝卜枪 (gun1)");
             return CARROT_INDEX;
-        }
         else if (lowerName == "gun2")
-        {
-            Debug.Log("识别为肉枪 (gun2)");
             return MEAT_INDEX;
-        }
         else if (lowerName == "gun3")
-        {
-            Debug.Log("识别为胡椒枪 (gun3)");
             return PEPPER_INDEX;
-        }
 
-        Debug.LogWarning($"未识别的武器名称: '{weaponName}'，使用默认索引0");
-        return 0; // 默认返回胡萝卜枪
+        return 0;
     }
 
-    // 显示提示，例如"按F食用饺子"
     public void ShowPickupHint(string message)
     {
         if (pickupHintText != null && pickupHintUI != null)
@@ -213,7 +162,6 @@ public class UIController : MonoBehaviour
         }
     }
 
-    // 隐藏提示
     public void HidePickupHint()
     {
         if (pickupHintUI != null)
@@ -222,28 +170,52 @@ public class UIController : MonoBehaviour
         }
     }
 
-    // 调试方法：手动测试武器显示
-    [ContextMenu("测试胡萝卜枪")]
-    public void TestCarrot()
+    // 显示死亡UI
+    public void ShowDeathUI()
     {
-        UpdateWeaponDisplay("Carrot Launcher", 0);
+        if (deathUIPanel != null)
+        {
+            deathUIPanel.SetActive(true);
+        }
+
+        if (deathTitleText != null)
+        {
+            deathTitleText.text = "YOU ARE DEAD";
+        }
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        Debug.Log("显示死亡UI");
     }
 
-    [ContextMenu("测试肉枪")]
-    public void TestMeat()
+    // 更新倒计时文字
+    public void UpdateDeathCountdown(float timeLeft)
     {
-        UpdateWeaponDisplay("Meat Blaster", 1);
+        if (deathCountdownText != null)
+        {
+            if (timeLeft > 0)
+            {
+                deathCountdownText.text = $"Respawning in {timeLeft:F0}s";
+            }
+            else
+            {
+                deathCountdownText.text = "Respawning...";
+            }
+        }
     }
 
-    [ContextMenu("测试胡椒枪")]
-    public void TestPepper()
+    // 隐藏死亡UI
+    public void HideDeathUI()
     {
-        UpdateWeaponDisplay("Pepper Shooter", 2);
-    }
+        if (deathUIPanel != null)
+        {
+            deathUIPanel.SetActive(false);
+        }
 
-    [ContextMenu("测试刀")]
-    public void TestKnife()
-    {
-        UpdateWeaponDisplay("Kitchen Knife", 3);
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
+        Debug.Log("隐藏死亡UI");
     }
 }
