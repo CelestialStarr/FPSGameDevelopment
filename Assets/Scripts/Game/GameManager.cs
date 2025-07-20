@@ -111,4 +111,28 @@ public class GameManager : MonoBehaviour
         else
             audioMixer.SetFloat("MasterVolume", Mathf.Log10(value) * 20f);
     }
+
+    public void LoadLevel2()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("Level2");
+    }
+
+    public void LoadLevel3()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("Level3");
+    }
+
+    public void LoadCutscene()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("Cutscene");//待改动剧情演出
+    }
+
+    public void LoadGameOver()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("GameOver");//结束界面
+    }
 }
