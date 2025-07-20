@@ -36,7 +36,7 @@ public class Gun : MonoBehaviour
         switch (gunType)
         {
             case GunType.Carrot:
-                if (string.IsNullOrEmpty(weaponName)) weaponName = "Carrot Launcher";
+                weaponName = "Carrot Launcher";  // 强制设置，不检查是否为空
                 if (fireRate == 0) fireRate = 0.2f;      // Fast
                 if (maxAmmo == 0) maxAmmo = 150;
                 if (currentAmmo == 0) currentAmmo = 50;
@@ -44,7 +44,7 @@ public class Gun : MonoBehaviour
                 canAutoFire = true;
                 break;
             case GunType.Meat:
-                if (string.IsNullOrEmpty(weaponName)) weaponName = "Meat Blaster";
+                weaponName = "Meat Blaster";     // 强制设置，不检查是否为空
                 if (fireRate == 0) fireRate = 1.0f;      // Slow
                 if (maxAmmo == 0) maxAmmo = 40;
                 if (currentAmmo == 0) currentAmmo = 20;
@@ -53,7 +53,7 @@ public class Gun : MonoBehaviour
                 isShotgun = true;
                 break;
             case GunType.Pepper:
-                if (string.IsNullOrEmpty(weaponName)) weaponName = "Pepper Shooter";
+                weaponName = "Pepper Shooter";   // 强制设置，不检查是否为空
                 if (fireRate == 0) fireRate = 1.5f;      // Very slow
                 if (maxAmmo == 0) maxAmmo = 30;
                 if (currentAmmo == 0) currentAmmo = 10;
@@ -61,6 +61,8 @@ public class Gun : MonoBehaviour
                 canAutoFire = false;
                 break;
         }
+
+        Debug.Log($"Gun initialized: {weaponName}, Type: {gunType}");
     }
 
     void Update()

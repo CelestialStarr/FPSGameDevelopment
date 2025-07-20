@@ -70,50 +70,136 @@ public class UIController : MonoBehaviour
             else
                 weaponIcons[KNIFE_INDEX].color = Color.gray; // 刀为灰色
         }
+
+        // 调试信息：打印初始化状态
+        Debug.Log("=== UIController初始化完成 ===");
+        for (int i = 0; i < weaponIcons.Length; i++)
+        {
+            if (weaponIcons[i] != null)
+            {
+                Debug.Log($"武器图标 {i}: {weaponIcons[i].name}, sprite: {weaponIcons[i].sprite?.name ?? "null"}");
+            }
+        }
     }
 
-    // 更新武器显示 - 改进版本
+    // 更新武器显示 - 增强调试版本
     public void UpdateWeaponDisplay(string weaponName, int weaponIndex)
     {
-        Debug.Log($"Updating weapon display: {weaponName}, Index: {weaponIndex}");
+        Debug.Log($"=== 更新武器显示 ===");
+        Debug.Log($"武器名称: '{weaponName}'");
+        Debug.Log($"传入索引: {weaponIndex}");
+        Debug.Log($"GetWeaponIndex结果: {GetWeaponIndex(weaponName)}");
 
-        if (weaponIcons != null && weaponIcons.Length > weaponIndex)
+        // 使用GetWeaponIndex的结果，而不是传入的weaponIndex
+        int actualIndex = GetWeaponIndex(weaponName);
+
+        if (weaponIcons != null && weaponIcons.Length > actualIndex)
         {
             for (int i = 0; i < weaponIcons.Length; i++)
             {
                 if (weaponIcons[i] != null)
                 {
                     // 当前武器高亮，其他半透明
-                    Color currentColor = weaponIcons[i].color;
-                    if (i == weaponIndex)
+                    if (i == actualIndex)
                     {
-                        // 当前武器 - 完全不透明
-                        weaponIcons[i].color = new Color(currentColor.r, currentColor.g, currentColor.b, 1f);
-                        weaponIcons[i].transform.localScale = Vector3.one * 1.2f; // 放大
+                        // 当前武器 - 完全不透明，放大
+                        if (weaponIcons[i].sprite != null)
+                        {
+                            // 有sprite，保持原色但设为不透明
+                            Color spriteColor = Color.white;
+                            weaponIcons[i].color = spriteColor;
+                        }
+                        else
+                        {
+                            // 没有sprite，使用默认颜色
+                            Color defaultColor = GetDefaultColor(i);
+                            weaponIcons[i].color = defaultColor;
+                        }
+                        weaponIcons[i].transform.localScale = Vector3.one * 1.2f;
+                        Debug.Log($"激活武器图标 {i}");
                     }
                     else
                     {
-                        // 其他武器 - 半透明
+                        // 其他武器 - 半透明，正常大小
+                        Color currentColor = weaponIcons[i].color;
                         weaponIcons[i].color = new Color(currentColor.r, currentColor.g, currentColor.b, 0.3f);
-                        weaponIcons[i].transform.localScale = Vector3.one; // 正常大小
+                        weaponIcons[i].transform.localScale = Vector3.one;
                     }
                 }
             }
         }
+        else
+        {
+            Debug.LogError($"武器索引 {actualIndex} 超出范围！weaponIcons长度: {weaponIcons?.Length ?? 0}");
+        }
     }
 
-    // 根据武器类型获取索引
+    // 获取默认颜色
+    Color GetDefaultColor(int index)
+    {
+        switch (index)
+        {
+            case CARROT_INDEX: return new Color(1f, 0.5f, 0f); // 橙色
+            case MEAT_INDEX: return new Color(0.6f, 0.3f, 0.1f); // 棕色
+            case PEPPER_INDEX: return Color.red; // 红色
+            case KNIFE_INDEX: return Color.gray; // 灰色
+            default: return Color.white;
+        }
+    }
+
+    // 根据武器类型获取索引 - 支持你的命名方式
     public int GetWeaponIndex(string weaponName)
     {
-        if (weaponName.Contains("Carrot") || weaponName.Contains("胡萝卜"))
-            return CARROT_INDEX;
-        else if (weaponName.Contains("Meat") || weaponName.Contains("肉"))
-            return MEAT_INDEX;
-        else if (weaponName.Contains("Pepper") || weaponName.Contains("辣椒"))
-            return PEPPER_INDEX;
-        else if (weaponName.Contains("Knife") || weaponName.Contains("刀"))
-            return KNIFE_INDEX;
+        Debug.Log($"正在解析武器名称: '{weaponName}'");
 
+        if (string.IsNullOrEmpty(weaponName))
+        {
+            Debug.LogWarning("武器名称为空！");
+            return 0;
+        }
+
+        // 转换为小写进行比较，避免大小写问题
+        string lowerName = weaponName.ToLower();
+
+        // 支持原有的名称
+        if (lowerName.Contains("carrot") || lowerName.Contains("胡萝卜"))
+        {
+            Debug.Log("识别为胡萝卜枪");
+            return CARROT_INDEX;
+        }
+        else if (lowerName.Contains("meat") || lowerName.Contains("肉"))
+        {
+            Debug.Log("识别为肉枪");
+            return MEAT_INDEX;
+        }
+        else if (lowerName.Contains("pepper") || lowerName.Contains("辣椒"))
+        {
+            Debug.Log("识别为胡椒枪");
+            return PEPPER_INDEX;
+        }
+        else if (lowerName.Contains("knife") || lowerName.Contains("刀"))
+        {
+            Debug.Log("识别为刀");
+            return KNIFE_INDEX;
+        }
+        // 支持你的gun1, gun2, gun3命名方式
+        else if (lowerName == "gun1" || lowerName == "gun")
+        {
+            Debug.Log("识别为胡萝卜枪 (gun1)");
+            return CARROT_INDEX;
+        }
+        else if (lowerName == "gun2")
+        {
+            Debug.Log("识别为肉枪 (gun2)");
+            return MEAT_INDEX;
+        }
+        else if (lowerName == "gun3")
+        {
+            Debug.Log("识别为胡椒枪 (gun3)");
+            return PEPPER_INDEX;
+        }
+
+        Debug.LogWarning($"未识别的武器名称: '{weaponName}'，使用默认索引0");
         return 0; // 默认返回胡萝卜枪
     }
 
@@ -134,5 +220,30 @@ public class UIController : MonoBehaviour
         {
             pickupHintUI.SetActive(false);
         }
+    }
+
+    // 调试方法：手动测试武器显示
+    [ContextMenu("测试胡萝卜枪")]
+    public void TestCarrot()
+    {
+        UpdateWeaponDisplay("Carrot Launcher", 0);
+    }
+
+    [ContextMenu("测试肉枪")]
+    public void TestMeat()
+    {
+        UpdateWeaponDisplay("Meat Blaster", 1);
+    }
+
+    [ContextMenu("测试胡椒枪")]
+    public void TestPepper()
+    {
+        UpdateWeaponDisplay("Pepper Shooter", 2);
+    }
+
+    [ContextMenu("测试刀")]
+    public void TestKnife()
+    {
+        UpdateWeaponDisplay("Kitchen Knife", 3);
     }
 }
