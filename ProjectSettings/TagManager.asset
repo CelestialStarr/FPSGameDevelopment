@@ -10,6 +10,7 @@ TagManager:
   - Ammo
   - Health
   - Ladder
+  - Trap
   layers:
   - Default
   - TransparentFX
