@@ -125,7 +125,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 15
   lifeTime: 5
-  laserImpact: {fileID: 4170840427311577276, guid: 92f5bb4dbdef09e4aa21d58c28bb4861, type: 3}
+  laserImpact: {fileID: 4170840427311577276, guid: 8293979f4fb1f434383375b2ce36bc0e, type: 3}
   damage: 10
   damageEnemy: 0
   damagePlayer: 1
