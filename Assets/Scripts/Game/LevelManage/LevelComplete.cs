@@ -17,41 +17,79 @@ public class LevelComplete : MonoBehaviour
             levelCompletePanel.SetActive(false);
 
         if (nextLevelButton != null)
+        {
+            nextLevelButton.onClick.RemoveAllListeners();
             nextLevelButton.onClick.AddListener(OnNextLevelClicked);
+        }
+    }
+
+    void Update()
+    {
+        // 按L键触发结算界面
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            ShowLevelCompleteUI();
+        }
     }
 
     public void ShowLevelCompleteUI()
     {
-        if (isShowing) return; // 防止重复调用
+        if (isShowing) return;
+
         isShowing = true;
 
+        // 先停止计时器并保存时间
+        if (LevelTimer.instance != null)
+        {
+            LevelTimer.instance.StopTimer();
+            LevelTimer.instance.SaveCurrentLevelTime();
+        }
+
+        // 显示UI
         if (levelCompletePanel != null)
             levelCompletePanel.SetActive(true);
 
         if (missionCompleteText != null)
-            missionCompleteText.text = "Mission Complete!";
+            missionCompleteText.text = "Mission Accomplished";
 
-        if (timeText != null && LevelTimer.instance != null)
+        // 显示时间
+        UpdateTimeDisplay();
+
+        // 确保按钮可交互
+        if (nextLevelButton != null)
+            nextLevelButton.interactable = true;
+
+        // 设置游戏状态
+        Time.timeScale = 0f;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    private void UpdateTimeDisplay()
+    {
+        if (timeText == null || LevelTimer.instance == null)
         {
-            // 先保存当前关卡时间
-            LevelTimer.instance.SaveCurrentLevelTime();
-
-            float levelTime = LevelTimer.instance.levelTimes[LevelTimer.instance.currentLevel];
-            timeText.text = "Time: " + FormatTime(levelTime);
+            if (timeText != null)
+                timeText.text = "Time: --:--";
+            return;
         }
 
-        // 使用GameManager的专用暂停方法
-        if (GameManager.Instance != null)
+        // 获取当前关卡时间
+        float levelTime = 0f;
+        int currentLevel = LevelTimer.instance.currentLevel;
+
+        if (currentLevel >= 0 && currentLevel < LevelTimer.instance.levelTimes.Length)
         {
-            GameManager.Instance.PauseForLevelComplete();
+            levelTime = LevelTimer.instance.levelTimes[currentLevel];
         }
-        else
+
+        // 如果保存的时间为0，使用当前计时
+        if (levelTime <= 0f)
         {
-            // 备用方案
-            Time.timeScale = 0f;
-            if (LevelTimer.instance != null)
-                LevelTimer.instance.PauseTimer();
+            levelTime = LevelTimer.instance.GetCurrentLevelTime();
         }
+
+        timeText.text = "Time: " + FormatTime(levelTime);
     }
 
     void OnNextLevelClicked()
@@ -59,17 +97,40 @@ public class LevelComplete : MonoBehaviour
         if (!isShowing) return;
 
         isShowing = false;
-
-        // 恢复游戏状态
         Time.timeScale = 1f;
 
+        if (levelCompletePanel != null)
+            levelCompletePanel.SetActive(false);
+
+        // 加载下一关
         if (LevelTimer.instance != null)
         {
             LevelTimer.instance.LoadNextLevel();
         }
         else
         {
-            Debug.LogError("LevelTimer instance not found!");
+            LoadNextLevelDirectly();
+        }
+    }
+
+    private void LoadNextLevelDirectly()
+    {
+        string currentScene = SceneManager.GetActiveScene().name.ToLower();
+
+        if (currentScene.Contains("level1"))
+        {
+            SceneManager.LoadScene("Level2");
+        }
+        else if (currentScene.Contains("level2"))
+        {
+            SceneManager.LoadScene("Level3");
+        }
+        else if (currentScene.Contains("level3"))
+        {
+            if (GameManager.Instance != null)
+                GameManager.Instance.LoadGameOver();
+            else
+                SceneManager.LoadScene("GameOver");
         }
     }
 
@@ -80,10 +141,10 @@ public class LevelComplete : MonoBehaviour
         return string.Format("{0:00}:{1:00}", minutes, seconds);
     }
 
-    // 如果需要直接返回主菜单
     public void ReturnToMainMenu()
     {
         Time.timeScale = 1f;
+
         if (GameManager.Instance != null)
         {
             GameManager.Instance.ReturnToMainMenu();
