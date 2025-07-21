@@ -29,7 +29,7 @@ public class EnemyController : MonoBehaviour
         shootTimeCounter = timeToShoot;
         shootWaitCounter = waitBetweenShots;
 
-        // 检查必需的引用
+        // Check required references
         ValidateReferences();
     }
 
@@ -54,16 +54,16 @@ public class EnemyController : MonoBehaviour
 
     void CreateDefaultFirePoint()
     {
-        // 创建一个默认的firePoint
+        // Create a default firePoint
         GameObject firePointObj = new GameObject("FirePoint");
         firePointObj.transform.SetParent(transform);
-        firePointObj.transform.localPosition = Vector3.forward + Vector3.up; // 前方偏上一点
+        firePointObj.transform.localPosition = Vector3.forward + Vector3.up; // Forward and slightly up
         firePoint = firePointObj.transform;
     }
 
     void Update()
     {
-        // 安全检查
+        // Safety checks
         if (PlayerController.instance == null || agent == null)
         {
             return;
@@ -150,7 +150,7 @@ public class EnemyController : MonoBehaviour
                     fireCount = fireRate;
                 }
 
-                SafeSetDestination(transform.position); // 射击时停止移动
+                SafeSetDestination(transform.position); // Stop moving while shooting
             }
             else
             {
@@ -163,55 +163,63 @@ public class EnemyController : MonoBehaviour
 
     void TryShoot()
     {
-        // 安全检查所有必需的引用
+        // Safety check all required references
         if (bullet == null)
         {
             Debug.LogWarning($"{gameObject.name}: Cannot shoot - bullet prefab is null!");
+            shootWaitCounter = waitBetweenShots; // Reset wait time
             return;
         }
 
         if (firePoint == null)
         {
             Debug.LogWarning($"{gameObject.name}: Cannot shoot - firePoint is null!");
+            shootWaitCounter = waitBetweenShots; // Reset wait time
             return;
         }
 
         if (PlayerController.instance == null)
         {
             Debug.LogWarning($"{gameObject.name}: Cannot shoot - player not found!");
+            shootWaitCounter = waitBetweenShots; // Reset wait time
             return;
         }
 
-        // 瞄准玩家
+        // Aim at player
         Vector3 aimTarget = targetPoint + new Vector3(0f, 0.1f, 0f);
         firePoint.LookAt(aimTarget);
 
-        // 检查瞄准角度
+        // Check aiming angle
         Vector3 targetDir = PlayerController.instance.transform.position - transform.position;
         float angle = Vector3.SignedAngle(targetDir, transform.forward, Vector3.up);
 
+
+
         if (Mathf.Abs(angle) < 30f)
         {
-            // 安全的实例化
+            // Safe instantiation
             try
             {
                 GameObject bulletInstance = Instantiate(bullet, firePoint.position, firePoint.rotation);
 
-                // 可选：给子弹设置发射者，避免自己打自己
+                // Set bullet as enemy bullet
                 BullerController bulletScript = bulletInstance.GetComponent<BullerController>();
                 if (bulletScript != null)
                 {
-                    // 如果子弹脚本有设置发射者的方法，可以在这里调用
+                    bulletScript.SetTargetType(true, false); // Can hit player, cannot hit enemies
+                    bulletScript.SetDamage(20); // Set damage value
                 }
 
-                Debug.Log($"{gameObject.name} fired a bullet!");
+                Debug.Log($"{gameObject.name} fired a bullet at player!");
             }
             catch (System.Exception e)
             {
                 Debug.LogError($"{gameObject.name}: Failed to instantiate bullet - {e.Message}");
+                shootWaitCounter = waitBetweenShots; // Reset wait time
+                return;
             }
 
-            // 播放射击动画
+            // Play shooting animation
             if (anim != null)
             {
                 anim.SetTrigger("fireShot");
@@ -219,6 +227,7 @@ public class EnemyController : MonoBehaviour
         }
         else
         {
+            Debug.Log($"{gameObject.name}: Angle too wide ({angle:F1}°), not shooting");
             shootWaitCounter = waitBetweenShots;
         }
     }
@@ -229,7 +238,11 @@ public class EnemyController : MonoBehaviour
         {
             try
             {
-                agent.SetDestination(destination);
+                // Only update destination if it's significantly different
+                if (Vector3.Distance(agent.destination, destination) > 0.5f)
+                {
+                    agent.SetDestination(destination);
+                }
             }
             catch (System.Exception e)
             {
@@ -254,7 +267,7 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    // 在编辑器中显示firePoint位置
+    // Show firePoint position in editor
     void OnDrawGizmosSelected()
     {
         if (firePoint != null)
