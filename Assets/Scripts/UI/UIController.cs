@@ -37,18 +37,31 @@ public class UIController : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null)
+        // 修改单例模式 - 每个场景重新创建UIController，避免跨场景UI引用问题
+        if (Instance != null)
         {
-            Instance = this;
+            Destroy(Instance.gameObject);
         }
-        else
-        {
-            Destroy(gameObject);
-        }
-        DontDestroyOnLoad(gameObject);
+        Instance = this;
+
+        // 对于UI组件，不要跨场景保持，每个场景都重新创建
+        // DontDestroyOnLoad(gameObject); // 注释掉这行
     }
 
     void Start()
+    {
+        // 延迟初始化，确保其他脚本都已就绪
+        Invoke("InitializeWeaponIcons", 0.1f);
+        Invoke("RefreshAllUIReferences", 0.2f);
+
+        // 确保死亡UI开始时是隐藏的
+        if (deathUIPanel != null)
+        {
+            deathUIPanel.SetActive(false);
+        }
+    }
+
+    private void InitializeWeaponIcons()
     {
         // 初始化武器图标
         if (weaponIcons != null && weaponIcons.Length >= 4)
@@ -73,11 +86,54 @@ public class UIController : MonoBehaviour
             else
                 weaponIcons[KNIFE_INDEX].color = Color.gray;
         }
+    }
 
-        // 确保死亡UI开始时是隐藏的
-        if (deathUIPanel != null)
+    private void RefreshAllUIReferences()
+    {
+        // 重新查找所有UI引用，解决场景切换后引用丢失的问题
+        if (healthSlider == null)
         {
-            deathUIPanel.SetActive(false);
+            Slider[] sliders = FindObjectsByType<Slider>(FindObjectsSortMode.None);
+            foreach (var slider in sliders)
+            {
+                if (slider.name.ToLower().Contains("health"))
+                {
+                    healthSlider = slider;
+                    break;
+                }
+            }
+        }
+
+        if (healthText == null)
+        {
+            Text[] texts = FindObjectsByType<Text>(FindObjectsSortMode.None);
+            foreach (var text in texts)
+            {
+                if (text.name.ToLower().Contains("health"))
+                {
+                    healthText = text;
+                    break;
+                }
+            }
+        }
+
+        if (ammoText == null)
+        {
+            Text[] texts = FindObjectsByType<Text>(FindObjectsSortMode.None);
+            foreach (var text in texts)
+            {
+                if (text.name.ToLower().Contains("ammo"))
+                {
+                    ammoText = text;
+                    break;
+                }
+            }
+        }
+
+        // 通知PlayerHealthController更新UI
+        if (PlayerHealthController.instance != null)
+        {
+            PlayerHealthController.instance.UpdateHealthUI();
         }
     }
 
@@ -217,5 +273,14 @@ public class UIController : MonoBehaviour
         Cursor.visible = false;
 
         Debug.Log("隐藏死亡UI");
+    }
+
+    // 更新弹药显示
+    public void UpdateAmmoDisplay(string ammoText)
+    {
+        if (this.ammoText != null)
+        {
+            this.ammoText.text = ammoText;
+        }
     }
 }

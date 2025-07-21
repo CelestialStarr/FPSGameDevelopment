@@ -3,6 +3,8 @@ using UnityEngine;
 public class PlayerHealthController : MonoBehaviour
 {
     public static PlayerHealthController instance;
+    private static int savedMaxHealth = 100; // 静态变量保存血量上限
+    private static int savedCurrentHealth = 100; // 静态变量保存当前血量
 
     [Header("Health Settings")]
     public int maxHealth = 100;
@@ -17,13 +19,25 @@ public class PlayerHealthController : MonoBehaviour
 
     private void Awake()
     {
+        // 每个场景重新创建，但保持血量数据
+        if (instance != null)
+        {
+            Destroy(instance.gameObject);
+        }
         instance = this;
+
+        // 不跨场景保持GameObject，但保持数据
+        // DontDestroyOnLoad(gameObject); // 注释掉
     }
 
     void Start()
     {
-        currentHealth = maxHealth;
-        UpdateHealthUI();
+        // 从静态变量恢复血量状态
+        maxHealth = savedMaxHealth;
+        currentHealth = savedCurrentHealth;
+
+        // 延迟更新UI，确保UIController已经准备好
+        Invoke("UpdateHealthUI", 0.3f);
     }
 
     void Update()
@@ -36,11 +50,26 @@ public class PlayerHealthController : MonoBehaviour
 
     public void UpdateHealthUI()
     {
+        // 保存当前血量到静态变量
+        savedMaxHealth = maxHealth;
+        savedCurrentHealth = currentHealth;
+
         if (UIController.Instance != null)
         {
-            UIController.Instance.healthSlider.maxValue = maxHealth;
-            UIController.Instance.healthSlider.value = currentHealth;
-            UIController.Instance.healthText.text = "Health: " + currentHealth + "/" + maxHealth;
+            if (UIController.Instance.healthSlider != null)
+            {
+                UIController.Instance.healthSlider.maxValue = maxHealth;
+                UIController.Instance.healthSlider.value = currentHealth;
+            }
+
+            if (UIController.Instance.healthText != null)
+            {
+                UIController.Instance.healthText.text = "Health: " + currentHealth + "/" + maxHealth;
+            }
+        }
+        else
+        {
+            Debug.LogWarning("UIController.Instance is null when trying to update health UI");
         }
     }
 
@@ -71,10 +100,13 @@ public class PlayerHealthController : MonoBehaviour
         UpdateHealthUI();
 
         // 禁用玩家控制器
-        PlayerController.instance.enabled = false;
+        if (PlayerController.instance != null)
+            PlayerController.instance.enabled = false;
 
         // 禁用角色控制器
-        CharacterController charController = PlayerController.instance.GetComponent<CharacterController>();
+        CharacterController charController = null;
+        if (PlayerController.instance != null)
+            charController = PlayerController.instance.GetComponent<CharacterController>();
         if (charController != null)
             charController.enabled = false;
 
@@ -91,7 +123,7 @@ public class PlayerHealthController : MonoBehaviour
         Debug.Log("Player died!");
     }
 
-    // 死亡倒计时协程 - 修复了方法名
+    // 死亡倒计时协程
     System.Collections.IEnumerator DeathCountdownSequence()
     {
         float countdown = respawnDelay;
@@ -122,6 +154,8 @@ public class PlayerHealthController : MonoBehaviour
 
     private void DisablePlayerRendering()
     {
+        if (PlayerController.instance == null) return;
+
         // 禁用玩家身上所有的Renderer组件，但不影响摄像机
         Renderer[] renderers = PlayerController.instance.GetComponentsInChildren<Renderer>();
         foreach (Renderer renderer in renderers)
@@ -143,6 +177,8 @@ public class PlayerHealthController : MonoBehaviour
     // 重生时重新启用渲染
     private void EnablePlayerRendering()
     {
+        if (PlayerController.instance == null) return;
+
         // 重新启用玩家身上所有的Renderer组件
         Renderer[] renderers = PlayerController.instance.GetComponentsInChildren<Renderer>(true); // 包括inactive的
         foreach (Renderer renderer in renderers)
@@ -163,7 +199,7 @@ public class PlayerHealthController : MonoBehaviour
     // 重生方法（由CheckpointManager调用）
     public void RespawnPlayer()
     {
-        // 重置血量
+        // 重置血量为满血
         currentHealth = maxHealth;
         isDead = false;
 
@@ -171,12 +207,15 @@ public class PlayerHealthController : MonoBehaviour
         EnablePlayerRendering();
 
         // 重新启用角色控制器
-        CharacterController charController = PlayerController.instance.GetComponent<CharacterController>();
+        CharacterController charController = null;
+        if (PlayerController.instance != null)
+            charController = PlayerController.instance.GetComponent<CharacterController>();
         if (charController != null)
             charController.enabled = true;
 
         // 重新启用玩家控制器（会自动处理武器显示）
-        PlayerController.instance.enabled = true;
+        if (PlayerController.instance != null)
+            PlayerController.instance.enabled = true;
 
         // 更新UI
         UpdateHealthUI();
@@ -213,5 +252,23 @@ public class PlayerHealthController : MonoBehaviour
     public bool IsDead()
     {
         return isDead;
+    }
+
+    // 重置血量为满血（用于关卡开始时，如果需要的话）
+    public void ResetToFullHealth()
+    {
+        currentHealth = maxHealth;
+        isDead = false;
+        UpdateHealthUI();
+    }
+
+    // 设置血量（保持当前血量状态，用于关卡间继承）
+    public void SetHealth(int newCurrentHealth, int newMaxHealth)
+    {
+        maxHealth = newMaxHealth;
+        currentHealth = Mathf.Clamp(newCurrentHealth, 0, maxHealth);
+        savedMaxHealth = maxHealth;
+        savedCurrentHealth = currentHealth;
+        UpdateHealthUI();
     }
 }

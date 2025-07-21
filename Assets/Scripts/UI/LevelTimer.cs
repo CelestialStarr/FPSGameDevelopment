@@ -5,13 +5,11 @@ using UnityEngine.SceneManagement;
 public class LevelTimer : MonoBehaviour
 {
     public static LevelTimer instance;
+    private static float[] savedLevelTimes = new float[3]; // 静态存储，跨场景保持
 
     [Header("Timer Settings")]
     public Text timerText;
     public bool countTime = true;
-
-    [Header("Level Times")]
-    public float[] levelTimes = new float[3]; // 存储每关的时间
 
     private float currentLevelTime = 0f;
     public int currentLevel = 0;
@@ -19,13 +17,9 @@ public class LevelTimer : MonoBehaviour
 
     void Awake()
     {
-        // 改进的单例模式 - 每个场景重新创建，但保持数据
-        if (instance != null && instance != this)
+        // 每个场景都允许有新的LevelTimer，但数据持久化
+        if (instance != null)
         {
-            // 复制之前的数据
-            levelTimes = instance.levelTimes;
-
-            // 销毁旧实例
             Destroy(instance.gameObject);
         }
 
@@ -35,8 +29,9 @@ public class LevelTimer : MonoBehaviour
 
     void Start()
     {
-        InitializeLevel();
-        RefreshUIReferences();
+        // 延迟初始化，确保场景完全加载
+        Invoke("InitializeLevel", 0.1f);
+        Invoke("RefreshUIReferences", 0.1f);
     }
 
     void Update()
@@ -52,6 +47,7 @@ public class LevelTimer : MonoBehaviour
     {
         // 获取当前关卡
         string sceneName = SceneManager.GetActiveScene().name.ToLower();
+        Debug.Log($"Initializing timer for scene: {sceneName}");
 
         if (sceneName.Contains("level1"))
             currentLevel = 0;
@@ -63,31 +59,37 @@ public class LevelTimer : MonoBehaviour
         {
             // 非游戏关卡，停止计时
             isTimerActive = false;
+            countTime = false;
             return;
         }
 
-        // 重置当前关卡时间
+        // 重置当前关卡时间为0（每次进入关卡都从0开始）
         currentLevelTime = 0f;
         isTimerActive = true;
         countTime = true;
 
-        Debug.Log($"Level {currentLevel + 1} timer started");
+        Debug.Log($"Level {currentLevel + 1} timer started, time reset to 0");
     }
 
     private void RefreshUIReferences()
     {
         // 场景切换后重新查找UI元素
+        timerText = null; // 先清空引用
+
+        Text[] texts = FindObjectsByType<Text>(FindObjectsSortMode.None);
+        foreach (var text in texts)
+        {
+            if (text.name.ToLower().Contains("timer") || text.name.ToLower().Contains("time"))
+            {
+                timerText = text;
+                Debug.Log($"Found timer text: {text.name}");
+                break;
+            }
+        }
+
         if (timerText == null)
         {
-            Text[] texts = FindObjectsOfType<Text>();
-            foreach (var text in texts)
-            {
-                if (text.name.Contains("Timer") || text.name.Contains("Time"))
-                {
-                    timerText = text;
-                    break;
-                }
-            }
+            Debug.LogWarning("Timer text not found in scene!");
         }
     }
 
@@ -106,9 +108,9 @@ public class LevelTimer : MonoBehaviour
 
     public void SaveCurrentLevelTime()
     {
-        if (currentLevel >= 0 && currentLevel < levelTimes.Length)
+        if (currentLevel >= 0 && currentLevel < savedLevelTimes.Length)
         {
-            levelTimes[currentLevel] = currentLevelTime;
+            savedLevelTimes[currentLevel] = currentLevelTime;
             Debug.Log($"Level {currentLevel + 1} completed in {FormatTime(currentLevelTime)}");
         }
     }
@@ -117,11 +119,18 @@ public class LevelTimer : MonoBehaviour
     {
         SaveCurrentLevelTime();
 
+        // 通知场景切换管理器关卡完成
+        if (SceneTransitionManager.Instance != null)
+        {
+            SceneTransitionManager.Instance.OnLevelCompleted();
+        }
+
         int nextLevel = currentLevel + 1;
 
         // 加载下一关
         if (nextLevel < 3)
         {
+            Debug.Log($"Loading next level: Level{nextLevel + 1}");
             SceneManager.LoadScene($"Level{nextLevel + 1}");
         }
         else
@@ -146,20 +155,17 @@ public class LevelTimer : MonoBehaviour
         float totalTime = 0f;
         string results = "Game Complete!\n\n";
 
-        for (int i = 0; i < levelTimes.Length; i++)
+        for (int i = 0; i < savedLevelTimes.Length; i++)
         {
-            if (levelTimes[i] > 0) // 只显示已完成的关卡
+            if (savedLevelTimes[i] > 0) // 只显示已完成的关卡
             {
-                results += $"Level {i + 1}: {FormatTime(levelTimes[i])}\n";
-                totalTime += levelTimes[i];
+                results += $"Level {i + 1}: {FormatTime(savedLevelTimes[i])}\n";
+                totalTime += savedLevelTimes[i];
             }
         }
 
         results += $"\nTotal Time: {FormatTime(totalTime)}";
         Debug.Log(results);
-
-        // 这里可以触发最终结果UI显示事件
-        // 例如：GameEvents.OnGameComplete?.Invoke(levelTimes, totalTime);
     }
 
     string FormatTime(float time)
@@ -198,6 +204,28 @@ public class LevelTimer : MonoBehaviour
     public float GetCurrentLevelTime()
     {
         return currentLevelTime;
+    }
+
+    // 获取所有关卡时间
+    public float[] GetAllLevelTimes()
+    {
+        return savedLevelTimes;
+    }
+
+    // 获取指定关卡时间
+    public float GetLevelTime(int levelIndex)
+    {
+        if (levelIndex >= 0 && levelIndex < savedLevelTimes.Length)
+        {
+            return savedLevelTimes[levelIndex];
+        }
+        return 0f;
+    }
+
+    // 为了向后兼容，提供levelTimes属性
+    public float[] levelTimes
+    {
+        get { return savedLevelTimes; }
     }
 
     // 检查计时器是否正在运行

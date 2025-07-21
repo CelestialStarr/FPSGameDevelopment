@@ -57,6 +57,8 @@ public class GameManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        Debug.Log($"Scene loaded: {scene.name}");
+
         // 重新查找UI引用（场景切换后可能丢失）
         RefreshUIReferences();
 
@@ -84,7 +86,7 @@ public class GameManager : MonoBehaviour
 
         if (volumeSlider == null)
         {
-            Slider[] sliders = FindObjectsOfType<Slider>();
+            Slider[] sliders = FindObjectsByType<Slider>(FindObjectsSortMode.None);
             foreach (var slider in sliders)
             {
                 if (slider.name.Contains("Volume"))
@@ -187,6 +189,7 @@ public class GameManager : MonoBehaviour
 
     public void LoadLevel(int levelNumber)
     {
+        Debug.Log($"Loading Level{levelNumber}");
         ForceResumeGame();
         SceneManager.LoadScene($"Level{levelNumber}");
     }
