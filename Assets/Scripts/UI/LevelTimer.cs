@@ -14,7 +14,7 @@ public class LevelTimer : MonoBehaviour
     public float[] levelTimes = new float[3]; // 存储每关的时间
 
     private float currentLevelTime = 0f;
-    private int currentLevel = 0;
+    public int currentLevel = 0;
 
     void Awake()
     {
