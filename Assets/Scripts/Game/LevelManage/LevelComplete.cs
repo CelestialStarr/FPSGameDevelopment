@@ -4,12 +4,28 @@ using UnityEngine.SceneManagement;
 
 public class LevelComplete : MonoBehaviour
 {
+    public static LevelComplete Instance;
+
     public GameObject levelCompletePanel;
     public Text missionCompleteText;
     public Text timeText;
     public Button nextLevelButton;
 
     private bool isShowing = false;
+
+    void Awake()
+    {
+        // 单例模式
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
+        // 可选：如果需要跨场景保持，取消注释下一行
+         DontDestroyOnLoad(gameObject);
+    }
 
     void Start()
     {
