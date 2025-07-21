@@ -24,7 +24,7 @@ public class LevelComplete : MonoBehaviour
         Instance = this;
 
         // 可选：如果需要跨场景保持，取消注释下一行
-         DontDestroyOnLoad(gameObject);
+         //DontDestroyOnLoad(gameObject);
     }
 
     void Start()
