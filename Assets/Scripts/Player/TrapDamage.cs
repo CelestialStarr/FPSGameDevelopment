@@ -1,42 +1,81 @@
 using UnityEngine;
 
-// 陷阱脚本 - 放在陷阱对象上
 public class TrapDamage : MonoBehaviour
 {
-    [Header("Trap Settings")]
+    [Header("Trap Type")]
     public TrapType trapType = TrapType.InstantKill;
-    public int damage = 100;
-    public float damageInterval = 1f; // 持续伤害间隔
 
-    [Header("Visual Effects")]
+    [Header("Damage Settings")]
+    public int damage = 100;
+    [Tooltip("For continuous damage - damage interval in seconds")]
+    public float damageInterval = 1f;
+    [Tooltip("For one-time damage - delay before damage is applied")]
+    public float damageDelay = 0f;
+
+    [Header("Visual & Audio")]
     public GameObject deathEffect;
+    public AudioClip trapSound;
     public bool showWarning = true;
     public Color warningColor = Color.red;
 
+    [Header("Debug")]
+    public bool enableDebugLog = true;
+
     public enum TrapType
     {
-        InstantKill,    // 立即死亡（刀）
-        DamageOverTime, // 持续伤害（油锅、煮锅）
-        OneTimeDamage   // 一次性伤害
+        InstantKill,        // Immediate death (knife, spike, etc.)
+        ContinuousDamage,   // Damage over time while in trap (fire, acid, etc.)
+        OneTimeDamage       // Single damage when entering (explosion, etc.)
     }
 
     private float nextDamageTime = 0f;
     private bool playerInTrap = false;
+    private bool hasDealtDamage = false; // For one-time damage
+    private AudioSource audioSource;
 
-    // 改为protected virtual，这样子类可以重写
-    protected virtual void Start()
+    void Start()
     {
-        // 设置陷阱标签
-        gameObject.tag = "Trap";
+        // Set trap tag
+        if (!gameObject.CompareTag("Trap"))
+        {
+            gameObject.tag = "Trap";
+        }
 
-        // 视觉提示
+        // Setup audio
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null && trapSound != null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        // Visual warning
         if (showWarning)
         {
-            Renderer renderer = GetComponent<Renderer>();
-            if (renderer != null)
-            {
-                renderer.material.color = warningColor;
-            }
+            ApplyWarningVisual();
+        }
+
+        // Ensure trigger collider
+        Collider col = GetComponent<Collider>();
+        if (col != null)
+        {
+            col.isTrigger = true;
+        }
+
+        if (enableDebugLog)
+        {
+            Debug.Log($"Trap {gameObject.name} initialized - Type: {trapType}, Damage: {damage}");
+        }
+    }
+
+    void ApplyWarningVisual()
+    {
+        Renderer renderer = GetComponent<Renderer>();
+        if (renderer != null)
+        {
+            // Create a new material instance to avoid affecting other objects
+            Material warningMaterial = new Material(renderer.material);
+            warningMaterial.color = warningColor;
+            renderer.material = warningMaterial;
         }
     }
 
@@ -45,6 +84,15 @@ public class TrapDamage : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerInTrap = true;
+            hasDealtDamage = false; // Reset for one-time damage
+
+            if (enableDebugLog)
+            {
+                Debug.Log($"Player entered trap: {gameObject.name} (Type: {trapType})");
+            }
+
+            // Play trap sound
+            PlayTrapSound();
 
             switch (trapType)
             {
@@ -53,12 +101,20 @@ public class TrapDamage : MonoBehaviour
                     break;
 
                 case TrapType.OneTimeDamage:
-                    DamagePlayer();
+                    if (damageDelay > 0)
+                    {
+                        Invoke(nameof(DealOneTimeDamage), damageDelay);
+                    }
+                    else
+                    {
+                        DealOneTimeDamage();
+                    }
                     break;
 
-                case TrapType.DamageOverTime:
-                    // 第一次伤害
-                    DamagePlayer();
+                case TrapType.ContinuousDamage:
+                    // Deal first damage immediately
+                    DealContinuousDamage();
+                    nextDamageTime = Time.time + damageInterval;
                     break;
             }
         }
@@ -66,11 +122,11 @@ public class TrapDamage : MonoBehaviour
 
     void OnTriggerStay(Collider other)
     {
-        if (other.CompareTag("Player") && trapType == TrapType.DamageOverTime)
+        if (other.CompareTag("Player") && trapType == TrapType.ContinuousDamage && playerInTrap)
         {
             if (Time.time >= nextDamageTime)
             {
-                DamagePlayer();
+                DealContinuousDamage();
                 nextDamageTime = Time.time + damageInterval;
             }
         }
@@ -81,56 +137,137 @@ public class TrapDamage : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerInTrap = false;
+
+            if (enableDebugLog)
+            {
+                Debug.Log($"Player exited trap: {gameObject.name}");
+            }
+
+            // Cancel any pending one-time damage
+            if (trapType == TrapType.OneTimeDamage)
+            {
+                CancelInvoke(nameof(DealOneTimeDamage));
+            }
         }
     }
 
     void InstantKillPlayer()
     {
-        if (deathEffect != null)
+        if (PlayerHealthController.instance != null)
         {
-            Instantiate(deathEffect, PlayerController.instance.transform.position, Quaternion.identity);
-        }
-
-        PlayerHealthController.instance.KillPlayer();
-
-        Debug.Log("Player killed by " + gameObject.name);
-    }
-
-    void DamagePlayer()
-    {
-        PlayerHealthController.instance.DamagePlayer(damage);
-        // 不需要手动调用 RespawnPlayer，KillPlayer() 内部会处理
-    }
-
-
-    // 特定陷阱示例 - 油锅
-    public class OilPotTrap : TrapDamage
-    {
-        [Header("Oil Pot Settings")]
-        public ParticleSystem bubbleEffect;
-        public AudioSource sizzleSound;
-
-        // 重写父类的Start方法
-        protected override void Start()
-        {
-            // 调用父类的Start
-            base.Start();
-
-            // 设置为持续伤害
-            trapType = TrapType.DamageOverTime;
-            damage = 20;
-            damageInterval = 0.5f;
-
-            // 开始冒泡特效
-            if (bubbleEffect != null)
+            // Create death effect at player position
+            if (deathEffect != null)
             {
-                bubbleEffect.Play();
+                Instantiate(deathEffect, PlayerController.instance.transform.position, Quaternion.identity);
             }
 
-            // 播放滋滋声
-            if (sizzleSound != null)
+            // Kill player
+            PlayerHealthController.instance.KillPlayer();
+
+            if (enableDebugLog)
             {
-                sizzleSound.Play();
+                Debug.Log($"Player instantly killed by {gameObject.name}");
+            }
+        }
+    }
+
+    void DealOneTimeDamage()
+    {
+        if (playerInTrap && !hasDealtDamage && PlayerHealthController.instance != null)
+        {
+            hasDealtDamage = true;
+            PlayerHealthController.instance.DamagePlayer(damage);
+
+            if (enableDebugLog)
+            {
+                Debug.Log($"Player took {damage} one-time damage from {gameObject.name}");
+            }
+
+            // Create effect
+            CreateDamageEffect();
+        }
+    }
+
+    void DealContinuousDamage()
+    {
+        if (PlayerHealthController.instance != null)
+        {
+            PlayerHealthController.instance.DamagePlayer(damage);
+
+            if (enableDebugLog)
+            {
+                Debug.Log($"Player took {damage} continuous damage from {gameObject.name}");
+            }
+
+            // Create effect
+            CreateDamageEffect();
+        }
+    }
+
+    void CreateDamageEffect()
+    {
+        if (deathEffect != null && PlayerController.instance != null)
+        {
+            GameObject effect = Instantiate(deathEffect, PlayerController.instance.transform.position, Quaternion.identity);
+            Destroy(effect, 2f); // Clean up effect after 2 seconds
+        }
+    }
+
+    void PlayTrapSound()
+    {
+        if (trapSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(trapSound);
+        }
+    }
+
+    // Public methods for external control
+    public void SetTrapType(TrapType newType)
+    {
+        trapType = newType;
+    }
+
+    public void SetDamage(int newDamage)
+    {
+        damage = newDamage;
+    }
+
+    public void SetDamageInterval(float newInterval)
+    {
+        damageInterval = newInterval;
+    }
+
+    public void ActivateTrap()
+    {
+        enabled = true;
+        GetComponent<Collider>().enabled = true;
+    }
+
+    public void DeactivateTrap()
+    {
+        enabled = false;
+        GetComponent<Collider>().enabled = false;
+        playerInTrap = false;
+    }
+
+    // Debug visualization in Scene view
+    void OnDrawGizmosSelected()
+    {
+        Collider col = GetComponent<Collider>();
+        if (col != null)
+        {
+            Gizmos.color = trapType == TrapType.InstantKill ? Color.red :
+                          trapType == TrapType.ContinuousDamage ? new Color(1f, 0.5f, 0f) : Color.yellow; // orange = new Color(1f, 0.5f, 0f)
+
+            if (col is BoxCollider box)
+            {
+                Gizmos.matrix = transform.localToWorldMatrix;
+                Gizmos.DrawWireCube(box.center, box.size);
+            }
+            else if (col is SphereCollider sphere)
+            {
+                Gizmos.matrix = transform.localToWorldMatrix;
+                Gizmos.DrawWireSphere(sphere.center, sphere.radius);
             }
         }
     }
