@@ -6,22 +6,22 @@ using UnityEngine;
 [System.Serializable]
 public class LimbAnimation
 {
-    public string name;                // 肢体名称（用于识别，非必要）
-    public Animator animator;          // 控制该肢体的 Animator 组件
-    public AnimationClip clip;         // 播放的动画片段
+    public string name;
+    public Animator animator;
+    public AnimationClip clip;
 }
 
-// 一个完整的动画状态（如出生、走路、攻击）包含所有肢体的动作
+// 一个完整的动画状态（如出生、走路、翻滚）包含所有肢体的动作
 [System.Serializable]
 public class AnimationState
 {
-    public string stateName;                   // 状态名称（如 "walk", "born"）
-    public List<LimbAnimation> limbAnimations; // 属于该状态的所有肢体动画
+    public string stateName;
+    public List<LimbAnimation> limbAnimations;
 }
 
 public class DumplingKing_Enemy : MonoBehaviour
 {
-    [Header("动画状态集合（如出生、走路等）")]
+    [Header("动画状态集合（如出生、走路、翻滚）")]
     public List<AnimationState> animations;
 
     [Header("非循环动画后延迟播放下一个（秒）")]
@@ -36,37 +36,61 @@ public class DumplingKing_Enemy : MonoBehaviour
     [Header("追踪速度")]
     public float moveSpeed = 1.5f;
 
-    // 出生动画是否已经播放完成
-    private bool bornPlayed = false;
+    [Header("翻滚攻击参数")]
+    public float rollSpeed = 6f;
+    public float rollDuration = 1f;
+    public float rollHitRadius = 1f;
+    public int rollDamage = 10;
 
-    // 当前动画状态名称
+    [Header("技能触发设置")]
+    public float skillCheckInterval = 5f;
+    public float skillTriggerProbability = 0.3f;
+
+    private float skillCheckTimer = 0f;
+    private bool bornPlayed = false;
+    private bool isUsingSkill = false;
+    private bool hasDealtDamageThisRoll = false;
     private string currentState = "";
 
     void Start()
     {
-        // 第一步：播放出生动画（只播一次）
+        // 自动寻找玩家（如果未赋值）
+        if (player == null)
+        {
+            GameObject p = GameObject.FindGameObjectWithTag("Player");
+            if (p != null) player = p.transform;
+        }
+
         StartCoroutine(PlayAnimationState(initialState, false, () =>
         {
-            bornPlayed = true; // 出生动画播放完毕标记
-            // 第二步：进入走路状态（循环播放）
+            bornPlayed = true;
             StartCoroutine(PlayAnimationState("walk", true));
         }));
     }
 
     void Update()
     {
-        // 如果出生动画完成且玩家对象存在，则持续面向并靠近玩家
-        if (bornPlayed && player != null)
+        if (bornPlayed && player != null && !isUsingSkill)
         {
+            // 追踪并靠近玩家
             Vector3 direction = player.position - transform.position;
-            direction.y = 0; // 只在XZ平面追踪
+            direction.y = 0;
 
             if (direction.magnitude > 0.1f)
             {
-                // 平滑旋转朝向玩家
                 transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), Time.deltaTime * 5f);
-                // 移动靠近玩家
                 transform.position += direction.normalized * moveSpeed * Time.deltaTime;
+            }
+
+            // 技能触发检查
+            skillCheckTimer += Time.deltaTime;
+            if (skillCheckTimer >= skillCheckInterval)
+            {
+                skillCheckTimer = 0f;
+                if (Random.value < skillTriggerProbability)
+                {
+                    StartCoroutine(TriggerRollSkill());
+                }
             }
         }
     }
@@ -74,12 +98,8 @@ public class DumplingKing_Enemy : MonoBehaviour
     /// <summary>
     /// 播放指定动画状态
     /// </summary>
-    /// <param name="stateName">动画状态名称，如 "walk"</param>
-    /// <param name="loop">是否循环播放（true为持续播放）</param>
-    /// <param name="onComplete">非循环播放完成后的回调</param>
     IEnumerator PlayAnimationState(string stateName, bool loop, System.Action onComplete = null)
     {
-        // 找到匹配状态
         AnimationState state = animations.Find(s => s.stateName == stateName);
         if (state == null)
         {
@@ -89,7 +109,6 @@ public class DumplingKing_Enemy : MonoBehaviour
 
         currentState = stateName;
 
-        // 播放该状态下所有 limb 的动画
         foreach (var limb in state.limbAnimations)
         {
             if (limb.animator && limb.clip)
@@ -98,7 +117,6 @@ public class DumplingKing_Enemy : MonoBehaviour
             }
         }
 
-        // 如果是非循环动画（如出生），等待结束后调用下一步
         if (!loop)
         {
             float duration = 0f;
@@ -109,7 +127,76 @@ public class DumplingKing_Enemy : MonoBehaviour
             }
 
             yield return new WaitForSeconds(duration + animationDelay);
-            onComplete?.Invoke(); // 播放完成后执行下一步（如播放走路动画）
+            onComplete?.Invoke();
+        }
+    }
+
+    /// <summary>
+    /// 触发翻滚技能（动画 + 冲刺）
+    /// </summary>
+    IEnumerator TriggerRollSkill()
+    {
+        isUsingSkill = true;
+
+        // 播放翻滚动画后 → 执行移动逻辑
+        yield return StartCoroutine(PlayAnimationState("roll", false, () =>
+        {
+            StartCoroutine(RollTowardPlayer());
+        }));
+    }
+
+    /// <summary>
+    /// 翻滚冲刺向玩家方向，期间可造成一次伤害
+    /// </summary>
+    IEnumerator RollTowardPlayer()
+    {
+        float timer = 0f;
+        hasDealtDamageThisRoll = false;
+
+        while (timer < rollDuration)
+        {
+            if (player == null) break;
+
+            // 动态追踪方向
+            Vector3 direction = player.position - transform.position;
+            direction.y = 0;
+            direction.Normalize();
+
+            if (direction != Vector3.zero)
+                transform.rotation = Quaternion.LookRotation(direction);
+
+            // 高速移动
+            transform.position += direction * rollSpeed * Time.deltaTime;
+
+            // 命中检测（只触发一次）
+            if (!hasDealtDamageThisRoll)
+            {
+                float dist = Vector3.Distance(transform.position, player.position);
+                if (dist <= rollHitRadius)
+                {
+                    hasDealtDamageThisRoll = true;
+                    Debug.Log($"翻滚命中玩家！造成 {rollDamage} 点伤害！");
+                    // 可调用玩家受伤函数（你自己加）：
+                    // player.GetComponent<PlayerHealth>().TakeDamage(rollDamage);
+                }
+            }
+
+            timer += Time.deltaTime;
+            yield return null;
+        }
+
+        // 翻滚结束后回到走路
+        StartCoroutine(PlayAnimationState("walk", true));
+        isUsingSkill = false;
+    }
+
+    // 可选：在 Scene 中可视化追踪方向
+    void OnDrawGizmos()
+    {
+        if (player != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawLine(transform.position + Vector3.up * 0.5f, player.position + Vector3.up * 0.5f);
         }
     }
 }
