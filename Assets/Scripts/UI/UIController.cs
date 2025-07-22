@@ -25,9 +25,13 @@ public class UIController : MonoBehaviour
     public Sprite pepperSprite;
 
     [Header("Death UI")]
-    public GameObject deathUIPanel;      // 死亡UI面板
-    public Text deathTitleText;          // "YOU ARE DEAD"文字
-    public Text deathCountdownText;      // 倒计时文字
+    public GameObject deathUIPanel;
+    public Text deathTitleText;
+    public Text deathCountdownText;
+
+    [Header("Pause UI")]
+    public GameObject pausePanel;
+    public Slider volumeSlider;
 
     // 武器索引常量
     public const int CARROT_INDEX = 0;
@@ -37,19 +41,35 @@ public class UIController : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-
+        // 关键修改：不再使用DontDestroyOnLoad，每个场景重新创建
+        Instance = this;
+        // 删除这行：DontDestroyOnLoad(gameObject);
     }
 
     void Start()
+    {
+        InitializeWeaponIcons();
+
+        // 确保死亡UI和暂停UI开始时是隐藏的
+        if (deathUIPanel != null)
+        {
+            deathUIPanel.SetActive(false);
+        }
+
+        if (pausePanel != null)
+        {
+            pausePanel.SetActive(false);
+        }
+
+        // 设置音量滑块事件
+        if (volumeSlider != null)
+        {
+            volumeSlider.onValueChanged.RemoveAllListeners();
+            volumeSlider.onValueChanged.AddListener(OnVolumeChanged);
+        }
+    }
+
+    private void InitializeWeaponIcons()
     {
         // 初始化武器图标
         if (weaponIcons != null && weaponIcons.Length >= 4)
@@ -73,12 +93,6 @@ public class UIController : MonoBehaviour
                 weaponIcons[KNIFE_INDEX].sprite = knifeSprite;
             else
                 weaponIcons[KNIFE_INDEX].color = Color.gray;
-        }
-
-        // 确保死亡UI开始时是隐藏的
-        if (deathUIPanel != null)
-        {
-            deathUIPanel.SetActive(false);
         }
     }
 
@@ -171,7 +185,6 @@ public class UIController : MonoBehaviour
         }
     }
 
-    // 显示死亡UI
     public void ShowDeathUI()
     {
         if (deathUIPanel != null)
@@ -190,7 +203,6 @@ public class UIController : MonoBehaviour
         Debug.Log("显示死亡UI");
     }
 
-    // 更新倒计时文字
     public void UpdateDeathCountdown(float timeLeft)
     {
         if (deathCountdownText != null)
@@ -206,7 +218,6 @@ public class UIController : MonoBehaviour
         }
     }
 
-    // 隐藏死亡UI
     public void HideDeathUI()
     {
         if (deathUIPanel != null)
@@ -218,5 +229,56 @@ public class UIController : MonoBehaviour
         Cursor.visible = false;
 
         Debug.Log("隐藏死亡UI");
+    }
+
+    // 暂停UI管理方法
+    public void ShowPauseUI()
+    {
+        if (pausePanel != null)
+        {
+            pausePanel.SetActive(true);
+        }
+    }
+
+    public void HidePauseUI()
+    {
+        if (pausePanel != null)
+        {
+            pausePanel.SetActive(false);
+        }
+    }
+
+    // 音量滑块事件
+    private void OnVolumeChanged(float value)
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SetVolume(value);
+        }
+    }
+
+    // UI按钮事件方法
+    public void OnResumeClicked()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.ResumeGame();
+        }
+    }
+
+    public void OnMainMenuClicked()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.ReturnToMainMenu();
+        }
+    }
+
+    public void OnQuitClicked()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.QuitGame();
+        }
     }
 }

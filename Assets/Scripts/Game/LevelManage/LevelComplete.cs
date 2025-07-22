@@ -108,7 +108,7 @@ public class LevelComplete : MonoBehaviour
         timeText.text = "Time: " + FormatTime(levelTime);
     }
 
-    void OnNextLevelClicked()
+    public void OnNextLevelClicked()
     {
         if (!isShowing) return;
 

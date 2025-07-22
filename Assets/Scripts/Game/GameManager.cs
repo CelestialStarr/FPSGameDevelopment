@@ -7,14 +7,14 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
-    [Header("UI")]
-    public GameObject pausePanel;
-    public Slider volumeSlider;
-
     [Header("Audio")]
     public AudioMixer audioMixer;
 
     private bool isPaused = false;
+
+    // 删除UI引用，改为通过UIController管理
+    // public GameObject pausePanel;
+    // public Slider volumeSlider;
 
     void Awake()
     {
@@ -33,8 +33,6 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        if (volumeSlider != null)
-            SetVolume(volumeSlider.value);
         ResumeGame();
     }
 
@@ -57,9 +55,6 @@ public class GameManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // 重新查找UI引用（场景切换后可能丢失）
-        RefreshUIReferences();
-
         if (!scene.name.StartsWith("Level"))
         {
             // 非关卡场景，确保不暂停
@@ -72,41 +67,20 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void RefreshUIReferences()
-    {
-        // 如果UI引用丢失，重新查找
-        if (pausePanel == null)
-        {
-            GameObject pausePanelObj = GameObject.Find("PausePanel");
-            if (pausePanelObj != null)
-                pausePanel = pausePanelObj;
-        }
-
-        if (volumeSlider == null)
-        {
-            Slider[] sliders = FindObjectsOfType<Slider>();
-            foreach (var slider in sliders)
-            {
-                if (slider.name.Contains("Volume"))
-                {
-                    volumeSlider = slider;
-                    break;
-                }
-            }
-        }
-    }
-
     public void PauseGame()
     {
-        if (pausePanel == null) return;
-
         isPaused = true;
-        pausePanel.SetActive(true);
         Time.timeScale = 0f;
 
         // 同步暂停计时器
         if (LevelTimer.instance != null)
             LevelTimer.instance.PauseTimer();
+
+        // 通知UIController显示暂停UI
+        if (UIController.Instance != null)
+        {
+            UIController.Instance.ShowPauseUI();
+        }
 
         // 设置光标状态
         Cursor.lockState = CursorLockMode.None;
@@ -121,15 +95,18 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        if (pausePanel == null) return;
-
         isPaused = false;
-        pausePanel.SetActive(false);
         Time.timeScale = 1f;
 
         // 同步恢复计时器
         if (LevelTimer.instance != null)
             LevelTimer.instance.ResumeTimer();
+
+        // 通知UIController隐藏暂停UI
+        if (UIController.Instance != null)
+        {
+            UIController.Instance.HidePauseUI();
+        }
 
         // 设置光标状态
         Cursor.lockState = CursorLockMode.Locked;
@@ -141,9 +118,6 @@ public class GameManager : MonoBehaviour
     {
         isPaused = false;
         Time.timeScale = 1f;
-
-        if (pausePanel != null)
-            pausePanel.SetActive(false);
 
         // 非游戏场景的光标状态
         Cursor.lockState = CursorLockMode.None;
