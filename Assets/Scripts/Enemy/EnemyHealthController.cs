@@ -195,9 +195,20 @@ public class EnemyHealthController : MonoBehaviour
             EnemySpawner[] spawners = FindObjectsOfType<EnemySpawner>();
             if (spawners.Length > 0)
             {
-                // 简单起见，通知第一个找到的出生器
                 spawners[0].OnEnemyDeath();
             }
+        }
+
+        // ADD THIS: 通知传送系统敌人死亡
+        KillBasedTeleportSystem teleportSystem = FindObjectOfType<KillBasedTeleportSystem>();
+        if (teleportSystem != null)
+        {
+            teleportSystem.OnEnemyKilled();
+            Debug.Log("Notified teleport system of enemy death!");
+        }
+        else
+        {
+            Debug.LogWarning("Could not find KillBasedTeleportSystem in scene!");
         }
     }
 
