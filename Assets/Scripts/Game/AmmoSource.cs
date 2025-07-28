@@ -54,7 +54,7 @@ public class DestructibleAmmoSource : MonoBehaviour
 
     [Header("=== First Encounter UI ===")]
     [Tooltip("Message shown when player first approaches this type")]
-    public string firstEncounterMessage = "Shoot to break and collect ammo!";
+    public string firstEncounterMessage = "Break & collect ammo!";
 
     [Tooltip("How long to show the first encounter message")]
     public float messageDisplayTime = 3f;
