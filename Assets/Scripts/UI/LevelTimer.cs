@@ -116,20 +116,41 @@ public class LevelTimer : MonoBehaviour
     public void LoadNextLevel()
     {
         SaveCurrentLevelTime();
-
         int nextLevel = currentLevel + 1;
 
-        // 加载下一关
-        if (nextLevel < 3)
+        // 根据当前关卡决定下一步
+        if (currentLevel == 1)
         {
-            SceneManager.LoadScene($"Level{nextLevel + 1}");
+            // 第1关完成 → 跳转到第2关
+            SceneManager.LoadScene("Level2");
+        }
+        else if (currentLevel == 2)
+        {
+            // 第2关完成 → 跳转到第3关
+            SceneManager.LoadScene("Level3");
+        }
+        else if (currentLevel == 3)
+        {
+            // 第3关完成 → 跳转到剧情关
+            SceneManager.LoadScene("CutScene");
+        }
+        else if (currentLevel == 4) // CutScene关卡
+        {
+            // 剧情关完成 → 游戏结束
+            ShowFinalResults();
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.LoadGameOver();
+            }
+            else
+            {
+                SceneManager.LoadScene("GameOver");
+            }
         }
         else
         {
-            // 游戏结束，显示总时间
+            // 超出预期的关卡数，默认游戏结束
             ShowFinalResults();
-
-            // 加载游戏结束场景
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.LoadGameOver();

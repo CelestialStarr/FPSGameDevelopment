@@ -18,8 +18,11 @@ EditorBuildSettings:
     path: Assets/Scenes/Level3.unity
     guid: b66eee5ba1f2d074b85bb80e2c2be0a8
   - enabled: 1
-    path: Assets/Scenes/Final.unity
-    guid: ada6025ad2615bb47b4ff0840de41ac0
+    path: Assets/Scenes/CutScene.unity
+    guid: 8f635c78c79025d4f8007ec924478363
+  - enabled: 1
+    path: Assets/Scenes/GameOver.unity
+    guid: ef4f8f06bc382b04eb6147b13ee6008e
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

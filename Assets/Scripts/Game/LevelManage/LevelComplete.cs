@@ -146,7 +146,7 @@ public class LevelComplete : MonoBehaviour
             if (GameManager.Instance != null)
                 GameManager.Instance.LoadGameOver();
             else
-                SceneManager.LoadScene("GameOver");
+                SceneManager.LoadScene("CutScene");
         }
     }
 
