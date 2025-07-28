@@ -30,41 +30,23 @@ public class SimpleStorySystem : MonoBehaviour
     private List<DialogueEntry> currentDialogueList;
     private System.Action onDialogueComplete;
 
-    // 跨场景数据
-    private static int totalKills = 0;
-    private static bool teleportUnlocked = false;
+    // 跨场景数据存储到PlayerPrefs（更稳定）
+    private int totalKills
+    {
+        get { return PlayerPrefs.GetInt("StorySystem_TotalKills", 0); }
+        set { PlayerPrefs.SetInt("StorySystem_TotalKills", value); }
+    }
+
+    private bool teleportUnlocked
+    {
+        get { return PlayerPrefs.GetInt("StorySystem_TeleportUnlocked", 0) == 1; }
+        set { PlayerPrefs.SetInt("StorySystem_TeleportUnlocked", value ? 1 : 0); }
+    }
 
     void Awake()
     {
-        // 如果是第一关，设置为单例并跨场景
-        if (currentScene == SceneType.Level1)
-        {
-            if (Instance == null)
-            {
-                Instance = this;
-                DontDestroyOnLoad(gameObject);
-            }
-            else
-            {
-                Destroy(gameObject);
-                return;
-            }
-        }
-        else
-        {
-            // 其他关卡：更新Instance引用为当前场景的UI
-            if (Instance != null)
-            {
-                // 保存跨场景数据
-                var oldKills = totalKills;
-                var oldTeleport = teleportUnlocked;
-
-                // 更新Instance但保持数据
-                Instance = this;
-                totalKills = oldKills;
-                teleportUnlocked = oldTeleport;
-            }
-        }
+        // 每个场景都是独立的Instance
+        Instance = this;
     }
 
     void Start()
@@ -249,8 +231,6 @@ public class SimpleStorySystem : MonoBehaviour
             new DialogueEntry("???", "You kill food because you are their natural enemy."),
             new DialogueEntry("???", "All this is not a heroic epic... but an invasion."),
             new DialogueEntry("System", "The expulsion protocol is activated."),
-
-
         };
 
         StartDialogue(dialogue, () => {
@@ -284,6 +264,16 @@ public class SimpleStorySystem : MonoBehaviour
     public void PlayCustomStory(List<DialogueEntry> dialogue)
     {
         StartDialogue(dialogue);
+    }
+
+    /// <summary>
+    /// 重置所有剧情数据（测试用）
+    /// </summary>
+    public void ResetStoryData()
+    {
+        PlayerPrefs.DeleteKey("StorySystem_TotalKills");
+        PlayerPrefs.DeleteKey("StorySystem_TeleportUnlocked");
+        Debug.Log("剧情数据已重置");
     }
 
     #endregion
