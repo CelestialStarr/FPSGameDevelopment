@@ -149,34 +149,6 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha3)) SwitchToWeapon(2);
         if (Input.GetKeyDown(KeyCode.Alpha4)) SwitchToWeapon(3);  // ADD THIS: Knife
 
-        // Q/E switching
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-            int newIndex = currentWeaponIndex - 1;
-            if (newIndex < 0) newIndex = 3;  // CHANGED: Loop back to knife (index 3)
-            SwitchToWeapon(newIndex);
-        }
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            int newIndex = currentWeaponIndex + 1;
-            if (newIndex > 3) newIndex = 0;  // CHANGED: Loop back to first gun
-            SwitchToWeapon(newIndex);
-        }
-
-        // Mouse scroll wheel
-        float scroll = Input.GetAxis("Mouse ScrollWheel");
-        if (scroll > 0f)
-        {
-            int newIndex = currentWeaponIndex + 1;
-            if (newIndex > 3) newIndex = 0;
-            SwitchToWeapon(newIndex);
-        }
-        else if (scroll < 0f)
-        {
-            int newIndex = currentWeaponIndex - 1;
-            if (newIndex < 0) newIndex = 3;
-            SwitchToWeapon(newIndex);
-        }
     }
 
     // CHANGED: Renamed and updated to handle both guns and knife
