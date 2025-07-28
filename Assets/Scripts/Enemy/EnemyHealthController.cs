@@ -199,7 +199,7 @@ public class EnemyHealthController : MonoBehaviour
             }
         }
 
-        // ADD THIS: 通知传送系统敌人死亡
+        // 通知传送系统敌人死亡
         KillBasedTeleportSystem teleportSystem = FindObjectOfType<KillBasedTeleportSystem>();
         if (teleportSystem != null)
         {
@@ -209,6 +209,17 @@ public class EnemyHealthController : MonoBehaviour
         else
         {
             Debug.LogWarning("Could not find KillBasedTeleportSystem in scene!");
+        }
+
+        // 添加这个：通知故事系统敌人死亡
+        if (SimpleStorySystem.Instance != null)
+        {
+            SimpleStorySystem.Instance.OnEnemyKilled();
+            Debug.Log("Notified story system of enemy death!");
+        }
+        else
+        {
+            Debug.LogWarning("Could not find SimpleStorySystem in scene!");
         }
     }
 

@@ -111,14 +111,13 @@ public class SimpleStorySystem : MonoBehaviour
     private void PlayTeleportUnlockStory()
     {
         teleportUnlocked = true;
-
         var dialogue = new List<DialogueEntry>
-        {
-            new DialogueEntry("???", "You are beginning to awaken... your abilities are returning."),
-            new DialogueEntry("???", "Are you beginning to remember something? Your skills... are not like ordinary ingredients."),
-            new DialogueEntry("", "[Teleportation function has been unlocked · Press T to use teleport]")
-        };
-
+    {
+        new DialogueEntry("???", "You are beginning to awaken... your abilities are returning."),
+        new DialogueEntry("???", "Are you beginning to remember something? Your skills... are not like ordinary ingredients."),
+        new DialogueEntry("", "[Teleportation function has been unlocked]"),
+        new DialogueEntry("", "[Find teleport points in the area and press T to teleport between them]")
+    };
         StartDialogue(dialogue, () => {
             Debug.Log("传送功能已解锁！");
         });
