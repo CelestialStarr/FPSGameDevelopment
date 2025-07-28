@@ -197,8 +197,6 @@ public class PlayerController : MonoBehaviour
         }
         return null;
     }
-
-    // FireShot method (unchanged)
     public void FireShot()
     {
         Gun activeGun = GetCurrentGun();
@@ -217,13 +215,19 @@ public class PlayerController : MonoBehaviour
                     float spreadX = Random.Range(-activeGun.spreadAngle, activeGun.spreadAngle);
                     float spreadY = Random.Range(-activeGun.spreadAngle, activeGun.spreadAngle);
                     Quaternion spread = firePoint.rotation * Quaternion.Euler(spreadX, spreadY, 0);
-                    Instantiate(activeGun.bullet, firePoint.position, spread);
+
+                    // 创建子弹实例
+                    GameObject bulletInstance = Instantiate(activeGun.bullet, firePoint.position, spread);
+
+                    activeGun.ConfigureBullet(bulletInstance);
                 }
             }
             else
             {
                 // Normal single bullet
-                Instantiate(activeGun.bullet, firePoint.position, firePoint.rotation);
+                GameObject bulletInstance = Instantiate(activeGun.bullet, firePoint.position, firePoint.rotation);
+
+                activeGun.ConfigureBullet(bulletInstance);
             }
 
             activeGun.fireCounter = activeGun.fireRate;
