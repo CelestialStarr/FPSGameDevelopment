@@ -1,3 +1,4 @@
+// ===== Updated Knife.cs =====
 using UnityEngine;
 using System.Collections;
 
@@ -7,18 +8,18 @@ public class Knife : MonoBehaviour
     public string weaponName = "Kitchen Knife";
     public int damage = 50;
     public float attackRange = 2f;
-    public float attackRate = 0.1f; // 每秒可以挥刀2次
+    public float attackRate = 0.1f; // Can swing knife 2 times per second
 
     [HideInInspector]
     public float attackCounter;
 
     [Header("Attack Detection")]
-    public Transform attackPoint;  // 刀的攻击点
-    public LayerMask enemyLayer;   // 敌人层
+    public Transform attackPoint;  // Knife attack point
+    public LayerMask enemyLayer;   // Enemy layer
 
     [Header("Effects")]
-    public GameObject slashEffect; // 挥刀特效
-    public AudioClip slashSound;   // 挥刀音效
+    public GameObject slashEffect; // Slash effect
+    public AudioClip slashSound;   // Slash sound
 
     private Animator knifeAnimator;
     private AudioSource audioSource;
@@ -44,21 +45,21 @@ public class Knife : MonoBehaviour
         }
     }
 
-    // 当武器被激活时调用
+    // Called when weapon is activated
     void OnEnable()
     {
         UpdateUI();
     }
 
-    // 更新UI显示
+    // Update UI display
     public void UpdateUI()
     {
         if (UIController.Instance != null)
         {
-            // 刀没有子弹，显示近战武器
+            // Knife has no ammo, display melee weapon
             UIController.Instance.ammoText.text = "MELEE WEAPON";
 
-            // 更新武器图标
+            // Update weapon icon
             int weaponIndex = UIController.Instance.GetWeaponIndex(weaponName);
             UIController.Instance.UpdateWeaponDisplay(weaponName, weaponIndex);
         }
@@ -68,54 +69,55 @@ public class Knife : MonoBehaviour
     {
         if (attackCounter <= 0)
         {
-            // 播放挥刀动画（使用SimpleKnifeAnimation）
+            // Play swing animation (using SimpleKnifeAnimation)
             SimpleKnifeAnimation knifeAnim = GetComponent<SimpleKnifeAnimation>();
             if (knifeAnim != null)
             {
                 knifeAnim.PlayAnimation();
             }
 
-            // 播放Animator动画（如果你有Animator）
+            // Play Animator animation (if you have Animator)
             if (knifeAnimator != null)
             {
                 knifeAnimator.SetTrigger("Attack");
             }
 
-            // 播放音效
+            // Play sound effect
             if (slashSound != null && audioSource != null)
             {
                 audioSource.PlayOneShot(slashSound);
             }
 
-            // 检测攻击范围内的敌人
+            // Detect enemies in attack range
             PerformAttack();
 
-            // 重置攻击计时器
+            // Reset attack timer
             attackCounter = attackRate;
         }
     }
 
     void PerformAttack()
     {
-        // 检测前方扇形区域内的敌人
+        // Detect enemies in front fan-shaped area
         Collider[] hitEnemies = Physics.OverlapSphere(attackPoint.position, attackRange, enemyLayer);
 
         foreach (Collider enemy in hitEnemies)
         {
-            // 检查是否在前方（可选）
+            // Check if in front (optional)
             Vector3 dirToEnemy = (enemy.transform.position - transform.position).normalized;
             float angle = Vector3.Angle(transform.forward, dirToEnemy);
 
-            if (angle < 60f) // 120度扇形范围
+            if (angle < 60f) // 120 degree fan range
             {
-                // 造成伤害
+                // Deal damage
                 EnemyHealthController enemyHealth = enemy.GetComponent<EnemyHealthController>();
                 if (enemyHealth != null)
                 {
                     enemyHealth.DamageEnemy(damage);
+                    Debug.Log($"Knife hit enemy for {damage} damage");
                 }
 
-                // 击退效果（可选）
+                // Knockback effect (optional)
                 Rigidbody enemyRb = enemy.GetComponent<Rigidbody>();
                 if (enemyRb != null)
                 {
@@ -125,7 +127,31 @@ public class Knife : MonoBehaviour
             }
         }
 
-        // 生成挥刀特效
+        // NEW: Detect ammo sources in attack range
+        Collider[] hitAmmoSources = Physics.OverlapSphere(attackPoint.position, attackRange);
+
+        foreach (Collider hit in hitAmmoSources)
+        {
+            if (hit.CompareTag("AmmoSource"))
+            {
+                // Check if in front
+                Vector3 dirToSource = (hit.transform.position - transform.position).normalized;
+                float angle = Vector3.Angle(transform.forward, dirToSource);
+
+                if (angle < 60f) // 120 degree fan range
+                {
+                    // Deal damage to ammo source
+                    DestructibleAmmoSource ammoSource = hit.GetComponent<DestructibleAmmoSource>();
+                    if (ammoSource != null && !ammoSource.IsDestroyed())
+                    {
+                        ammoSource.TakeDamage(damage);
+                        Debug.Log($"Knife hit ammo source for {damage} damage");
+                    }
+                }
+            }
+        }
+
+        // Generate slash effect
         if (slashEffect != null)
         {
             GameObject effect = Instantiate(slashEffect, attackPoint.position, attackPoint.rotation);
@@ -133,12 +159,16 @@ public class Knife : MonoBehaviour
         }
     }
 
-    // 可视化攻击范围（编辑器中）
+    // Visualize attack range (in editor)
     void OnDrawGizmosSelected()
     {
         if (attackPoint == null) return;
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(attackPoint.position, attackRange);
+
+        // Draw attack direction
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawRay(attackPoint.position, transform.forward * attackRange);
     }
 }

@@ -1,10 +1,10 @@
+// ===== Updated Gun.cs =====
 using UnityEngine;
 
 public class Gun : MonoBehaviour
 {
     [Header("Weapon Info")]
     public string weaponName = "Gun";
-
     public enum GunType
     {
         Carrot,   // Fast firing, low damage
@@ -36,7 +36,7 @@ public class Gun : MonoBehaviour
         switch (gunType)
         {
             case GunType.Carrot:
-                weaponName = "Carrot Launcher";  // 强制设置，不检查是否为空
+                weaponName = "Corn Launcher";  // Updated name to match ammo system
                 if (fireRate == 0) fireRate = 0.2f;      // Fast
                 if (maxAmmo == 0) maxAmmo = 150;
                 if (currentAmmo == 0) currentAmmo = 50;
@@ -44,7 +44,7 @@ public class Gun : MonoBehaviour
                 canAutoFire = true;
                 break;
             case GunType.Meat:
-                weaponName = "Meat Blaster";     // 强制设置，不检查是否为空
+                weaponName = "Meat Blaster";     // Consistent naming
                 if (fireRate == 0) fireRate = 1.0f;      // Slow
                 if (maxAmmo == 0) maxAmmo = 40;
                 if (currentAmmo == 0) currentAmmo = 20;
@@ -53,7 +53,7 @@ public class Gun : MonoBehaviour
                 isShotgun = true;
                 break;
             case GunType.Pepper:
-                weaponName = "Pepper Shooter";   // 强制设置，不检查是否为空
+                weaponName = "Vegetable Shooter";   // Updated name to match ammo system
                 if (fireRate == 0) fireRate = 1.5f;      // Very slow
                 if (maxAmmo == 0) maxAmmo = 30;
                 if (currentAmmo == 0) currentAmmo = 10;
@@ -61,7 +61,6 @@ public class Gun : MonoBehaviour
                 canAutoFire = false;
                 break;
         }
-
         Debug.Log($"Gun initialized: {weaponName}, Type: {gunType}");
     }
 
@@ -73,21 +72,20 @@ public class Gun : MonoBehaviour
         }
     }
 
-    // 当武器被激活时调用
+    // Called when weapon is activated
     void OnEnable()
     {
         UpdateUI();
     }
 
-    // 更新UI显示
+    // Update UI display
     public void UpdateUI()
     {
         if (UIController.Instance != null)
         {
-            // 更新子弹数量
+            // Update ammo count
             UIController.Instance.ammoText.text = "AMMO: " + currentAmmo;
-
-            // 更新武器图标
+            // Update weapon icon
             int weaponIndex = UIController.Instance.GetWeaponIndex(weaponName);
             UIController.Instance.UpdateWeaponDisplay(weaponName, weaponIndex);
         }
@@ -100,11 +98,21 @@ public class Gun : MonoBehaviour
         {
             currentAmmo = maxAmmo;
         }
-
-        // 更新UI
+        // Update UI
         if (UIController.Instance != null)
         {
             UIController.Instance.ammoText.text = "AMMO: " + currentAmmo;
+        }
+    }
+
+    // NEW: Method to configure bullet for ammo source damage
+    public void ConfigureBullet(GameObject bulletInstance)
+    {
+        BullerController bulletScript = bulletInstance.GetComponent<BullerController>();
+        if (bulletScript != null)
+        {
+            // Player bullets can damage enemies and ammo sources, but not player
+            bulletScript.SetTargetType(false, true, true); // canHitPlayer, canHitEnemies, canHitAmmoSources
         }
     }
 }
