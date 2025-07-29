@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class SimpleStorySystem : MonoBehaviour
@@ -247,18 +248,29 @@ public class SimpleStorySystem : MonoBehaviour
     public void PlayCutSceneStory()
     {
         var dialogue = new List<DialogueEntry>
-        {
-            new DialogueEntry("System", "Intruder identification completed."),
-            new DialogueEntry("System", "Target: Periplaneta americana"),
-            new DialogueEntry("???", "You are not food... you are cockroaches."),
-            new DialogueEntry("???", "You kill food because you are their natural enemy."),
-            new DialogueEntry("???", "All this is not a heroic epic... but an invasion."),
-            new DialogueEntry("System", "The expulsion protocol is activated."),
-        };
+    {
+        new DialogueEntry("System", "Intruder identification completed."),
+        new DialogueEntry("System", "Target: Periplaneta americana"),
+        new DialogueEntry("???", "You are not food... you are cockroaches."),
+        new DialogueEntry("???", "You kill food because you are their natural enemy."),
+        new DialogueEntry("???", "All this is not a heroic epic... but an invasion."),
+        new DialogueEntry("System", "The expulsion protocol is activated."),
+    };
 
         StartDialogue(dialogue, () => {
-            Debug.Log("准备播放视频");
-            // 这里可以添加场景跳转逻辑
+            Debug.Log("剧情结束，准备播放视频");
+
+            // 查找视频播放器并开始播放
+            var videoPlayer = FindObjectOfType<CutSceneVideoPlayer>();
+            if (videoPlayer != null)
+            {
+                videoPlayer.PlayVideo();
+            }
+            else
+            {
+                Debug.LogWarning("未找到视频播放器，直接跳转GameOver");
+                SceneManager.LoadScene("GameOver");
+            }
         });
     }
     #endregion
