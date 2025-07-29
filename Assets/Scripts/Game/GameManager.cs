@@ -55,6 +55,8 @@ public class GameManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        Debug.Log($"场景加载完成: {scene.name}");
+
         if (!scene.name.StartsWith("Level"))
         {
             // 非关卡场景，确保不暂停
@@ -62,8 +64,15 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            // 是关卡，恢复状态
-            ResumeGame();
+            // **临时方案：关卡场景不要立即重置状态**
+            // 让剧情系统和其他系统自己管理状态
+            Debug.Log("关卡场景，跳过状态重置");
+
+            // 只重置暂停状态，其他状态让剧情系统处理
+            isPaused = false;
+
+            // 不要设置Time.timeScale和鼠标状态
+            // 不要强制启用PlayerController
         }
     }
 
