@@ -10,7 +10,7 @@ public class HealthPickUp : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             isPlayerNearby = true;
-            UIController.Instance.ShowPickupHint($"Press F to eat +{healAmount} HP");
+            UIController.Instance.ShowPickupHint($"°´ F ³ÔÏÂ +{healAmount} HP");
         }
     }
 

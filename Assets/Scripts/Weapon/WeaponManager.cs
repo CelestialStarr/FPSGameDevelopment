@@ -30,6 +30,16 @@ public class WeaponManager : MonoBehaviour
             }
         }
 
+        // Êó±ê¹öÂÖÇÐ»»ÎäÆ÷
+        float scrollInput = Input.GetAxis("Mouse ScrollWheel");
+        if (scrollInput > 0f)
+        {
+            SwitchWeapon((currentWeaponIndex + 1) % weapons.Length);
+        }
+        else if (scrollInput < 0f)
+        {
+            SwitchWeapon((currentWeaponIndex - 1 + weapons.Length) % weapons.Length);
+        }
     }
 
     public void SwitchWeapon(int newWeaponIndex)
