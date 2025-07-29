@@ -147,14 +147,13 @@ public class UIController : MonoBehaviour
         {
             return 0;
         }
-
         string lowerName = weaponName.ToLower();
 
-        if (lowerName.Contains("carrot") || lowerName.Contains("ºúÂÜ²·"))
+        if (lowerName.Contains("carrot") || lowerName.Contains("ºúÂÜ²·") || lowerName.Contains("corn"))
             return CARROT_INDEX;
-        else if (lowerName.Contains("meat") || lowerName.Contains("Èâ"))
+        else if (lowerName.Contains("meat") || lowerName.Contains("Èâ") || lowerName.Contains("blaster"))
             return MEAT_INDEX;
-        else if (lowerName.Contains("pepper") || lowerName.Contains("À±½·"))
+        else if (lowerName.Contains("pepper") || lowerName.Contains("À±½·") || lowerName.Contains("vegetable"))
             return PEPPER_INDEX;
         else if (lowerName.Contains("knife") || lowerName.Contains("µ¶"))
             return KNIFE_INDEX;
@@ -164,7 +163,6 @@ public class UIController : MonoBehaviour
             return MEAT_INDEX;
         else if (lowerName == "gun3")
             return PEPPER_INDEX;
-
         return 0;
     }
 
