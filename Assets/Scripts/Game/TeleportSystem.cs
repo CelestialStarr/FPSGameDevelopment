@@ -1,9 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class KillBasedTeleportSystem : MonoBehaviour
+public class SimpleTeleportSystem : MonoBehaviour
 {
-    public static KillBasedTeleportSystem Instance;
+    public static SimpleTeleportSystem Instance;
 
     [Header("Teleport Points")]
     public Transform pointA;
@@ -17,11 +17,10 @@ public class KillBasedTeleportSystem : MonoBehaviour
     public GameObject teleportEffect;
     public AudioClip teleportSound;
 
-    [Header("UI - Only Essential")]
+    [Header("UI")]
     public GameObject teleportPromptUI;
     public Text teleportPromptText;
 
-    private bool teleportUnlocked = false;
     private bool isNearTeleportPoint = false;
     private Transform nearestTeleportPoint;
     private AudioSource audioSource;
@@ -44,19 +43,17 @@ public class KillBasedTeleportSystem : MonoBehaviour
         if (teleportPromptUI != null)
             teleportPromptUI.SetActive(false);
 
-        Debug.Log("Simplified teleport system initialized");
+        Debug.Log("Simple teleport system initialized - ready to use!");
     }
 
     void Update()
     {
-        if (teleportUnlocked)
-        {
-            CheckPlayerNearTeleportPoints();
+        // 直接检查传送点，无需解锁
+        CheckPlayerNearTeleportPoints();
 
-            if (isNearTeleportPoint && Input.GetKeyDown(KeyCode.T))
-            {
-                StartCoroutine(TeleportPlayer());
-            }
+        if (isNearTeleportPoint && Input.GetKeyDown(KeyCode.T))
+        {
+            StartCoroutine(TeleportPlayer());
         }
     }
 
@@ -108,13 +105,6 @@ public class KillBasedTeleportSystem : MonoBehaviour
                 teleportPromptText.text = $"Press T to teleport to {targetName}";
             }
         }
-    }
-
-    // 公共方法：由故事系统调用来解锁传送
-    public void UnlockTeleportFromStory()
-    {
-        teleportUnlocked = true;
-        Debug.Log("Teleport unlocked by story system!");
     }
 
     System.Collections.IEnumerator TeleportPlayer()
@@ -173,30 +163,6 @@ public class KillBasedTeleportSystem : MonoBehaviour
         CheckPlayerNearTeleportPoints();
 
         Debug.Log($"Player teleported from {nearestTeleportPoint.name} to {targetPoint.name}");
-    }
-
-    // 公共方法：检查传送是否已解锁
-    public bool IsTeleportUnlocked()
-    {
-        return teleportUnlocked;
-    }
-
-    // 重置传送系统（测试用）
-    public void ResetTeleportSystem()
-    {
-        teleportUnlocked = false;
-
-        if (teleportPromptUI != null)
-            teleportPromptUI.SetActive(false);
-
-        Debug.Log("Teleport system reset");
-    }
-
-    // 手动解锁传送（测试用）
-    [ContextMenu("Unlock Teleport")]
-    public void ManualUnlockTeleport()
-    {
-        UnlockTeleportFromStory();
     }
 
     // Debug visualization
