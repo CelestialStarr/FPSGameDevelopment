@@ -10,6 +10,7 @@ public class EnemyHealthController : MonoBehaviour
     [Header("Death Settings")]
     public GameObject[] possibleDrops;      // 可能掉落的物品（子弹包等）
     public float dropChance = 0.7f;         // 掉落概率
+    public float dropHeight = 0.2f;
     public GameObject deathEffect;          // 死亡特效
     public AudioClip hurtSound;             // 受伤音效
     public AudioClip deathSound;            // 死亡音效
@@ -146,6 +147,12 @@ public class EnemyHealthController : MonoBehaviour
         // 禁用敌人组件但保留物体一小段时间（用于音效播放）
         DisableEnemyComponents();
 
+        DumplingEnemy dumplingScript = GetComponent<DumplingEnemy>();
+        if (dumplingScript != null)
+        {
+            dumplingScript.OnEnemyDeath();
+        }
+
         // 延迟销毁
         Destroy(gameObject, 1f);
     }
@@ -156,18 +163,18 @@ public class EnemyHealthController : MonoBehaviour
         {
             // 随机选择掉落物品
             int randomIndex = Random.Range(0, possibleDrops.Length);
-            Vector3 dropPosition = transform.position + Vector3.up * 0.5f;
+            Vector3 dropPosition = transform.position + Vector3.up * dropHeight; // 使用可调整的掉落高度
 
             GameObject droppedItem = Instantiate(possibleDrops[randomIndex], dropPosition, Quaternion.identity);
 
-            // 给掉落物品一个小的随机力
+            // 给掉落物品一个更小的随机力
             Rigidbody dropRb = droppedItem.GetComponent<Rigidbody>();
             if (dropRb != null)
             {
                 Vector3 randomForce = new Vector3(
-                    Random.Range(-2f, 2f),
-                    Random.Range(1f, 3f),
-                    Random.Range(-2f, 2f)
+                    Random.Range(-1f, 1f),      // 减小水平力
+                    Random.Range(0.5f, 1.5f),   // 减小向上的力
+                    Random.Range(-1f, 1f)       // 减小水平力
                 );
                 dropRb.AddForce(randomForce, ForceMode.Impulse);
             }

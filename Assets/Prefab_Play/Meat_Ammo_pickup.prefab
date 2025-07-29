@@ -272,7 +272,7 @@ MonoBehaviour:
   pepperAmmoAmount: 5
   useCustomAmount: 0
   customAmmoAmount: 0
-  detectionDistance: 5
+  detectionDistance: 10
   successMessageDuration: 1.5
   errorMessageDuration: 2
   pickupEffect: {fileID: 0}
