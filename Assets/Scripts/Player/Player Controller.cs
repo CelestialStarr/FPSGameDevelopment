@@ -149,34 +149,6 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha3)) SwitchToWeapon(2);
         if (Input.GetKeyDown(KeyCode.Alpha4)) SwitchToWeapon(3);  // ADD THIS: Knife
 
-        // Q/E switching
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-            int newIndex = currentWeaponIndex - 1;
-            if (newIndex < 0) newIndex = 3;  // CHANGED: Loop back to knife (index 3)
-            SwitchToWeapon(newIndex);
-        }
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            int newIndex = currentWeaponIndex + 1;
-            if (newIndex > 3) newIndex = 0;  // CHANGED: Loop back to first gun
-            SwitchToWeapon(newIndex);
-        }
-
-        // Mouse scroll wheel
-        float scroll = Input.GetAxis("Mouse ScrollWheel");
-        if (scroll > 0f)
-        {
-            int newIndex = currentWeaponIndex + 1;
-            if (newIndex > 3) newIndex = 0;
-            SwitchToWeapon(newIndex);
-        }
-        else if (scroll < 0f)
-        {
-            int newIndex = currentWeaponIndex - 1;
-            if (newIndex < 0) newIndex = 3;
-            SwitchToWeapon(newIndex);
-        }
     }
 
     // CHANGED: Renamed and updated to handle both guns and knife
@@ -225,8 +197,6 @@ public class PlayerController : MonoBehaviour
         }
         return null;
     }
-
-    // FireShot method (unchanged)
     public void FireShot()
     {
         Gun activeGun = GetCurrentGun();
@@ -245,13 +215,19 @@ public class PlayerController : MonoBehaviour
                     float spreadX = Random.Range(-activeGun.spreadAngle, activeGun.spreadAngle);
                     float spreadY = Random.Range(-activeGun.spreadAngle, activeGun.spreadAngle);
                     Quaternion spread = firePoint.rotation * Quaternion.Euler(spreadX, spreadY, 0);
-                    Instantiate(activeGun.bullet, firePoint.position, spread);
+
+                    // 创建子弹实例
+                    GameObject bulletInstance = Instantiate(activeGun.bullet, firePoint.position, spread);
+
+                    activeGun.ConfigureBullet(bulletInstance);
                 }
             }
             else
             {
                 // Normal single bullet
-                Instantiate(activeGun.bullet, firePoint.position, firePoint.rotation);
+                GameObject bulletInstance = Instantiate(activeGun.bullet, firePoint.position, firePoint.rotation);
+
+                activeGun.ConfigureBullet(bulletInstance);
             }
 
             activeGun.fireCounter = activeGun.fireRate;

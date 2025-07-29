@@ -175,10 +175,10 @@ public class GameManager : MonoBehaviour
         LoadLevel(3);
     }
 
-    public void LoadCutscene()
+    public void LoadCutScene()
     {
         ForceResumeGame();
-        SceneManager.LoadScene("Cutscene");
+        SceneManager.LoadScene("CutScene");
     }
 
     public void LoadGameOver()
