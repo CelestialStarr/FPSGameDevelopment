@@ -16,46 +16,38 @@ public class BossAnimationController : MonoBehaviour
     {
         currentState = state;
 
-        switch (state)
+        // 把动作名转为字符串，比如 Born -> "Born"
+        string action = state.ToString();
+
+        // 拼接成 Body_Born、LeftHand_Born ...
+        PlayNamedClip(bodyAnimator, "Body_" + action);
+        PlayNamedClip(leftHandAnimator, "LeftHand_" + action);
+        PlayNamedClip(rightHandAnimator, "RightHand_" + action);
+        PlayNamedClip(leftLegAnimator, "LeftLeg_" + action);
+        PlayNamedClip(rightLegAnimator, "RightLeg_" + action);
+
+        // 特别处理：如果是 Roll，隐藏 limb
+        if (state == BossState.Roll)
         {
-            case BossState.Born:
-                PlayAll("Born");
-                break;
-            case BossState.Walk:
-                PlayAll("Walk");
-                break;
-            case BossState.Roll:
-                PlayOnlyBody("Roll");
-                break;
-            case BossState.Summon:
-                PlayAll("Summon");
-                break;
-            case BossState.Dead:
-                PlayAll("Dead");
-                break;
+            leftHandAnimator?.gameObject.SetActive(false);
+            rightHandAnimator?.gameObject.SetActive(false);
+            leftLegAnimator?.gameObject.SetActive(false);
+            rightLegAnimator?.gameObject.SetActive(false);
+        }
+        else
+        {
+            leftHandAnimator?.gameObject.SetActive(true);
+            rightHandAnimator?.gameObject.SetActive(true);
+            leftLegAnimator?.gameObject.SetActive(true);
+            rightLegAnimator?.gameObject.SetActive(true);
         }
     }
 
-    void PlayAll(string name)
+    void PlayNamedClip(Animator animator, string clipName)
     {
-        bodyAnimator?.Play(name);
-        leftHandAnimator?.Play(name);
-        rightHandAnimator?.Play(name);
-        leftLegAnimator?.Play(name);
-        rightLegAnimator?.Play(name);
-
-        leftHandAnimator?.gameObject.SetActive(true);
-        rightHandAnimator?.gameObject.SetActive(true);
-        leftLegAnimator?.gameObject.SetActive(true);
-        rightLegAnimator?.gameObject.SetActive(true);
-    }
-
-    void PlayOnlyBody(string name)
-    {
-        bodyAnimator?.Play(name);
-        leftHandAnimator?.gameObject.SetActive(false);
-        rightHandAnimator?.gameObject.SetActive(false);
-        leftLegAnimator?.gameObject.SetActive(false);
-        rightLegAnimator?.gameObject.SetActive(false);
+        if (animator != null)
+        {
+            animator.Play(clipName);
+        }
     }
 }
