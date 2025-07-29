@@ -12,7 +12,7 @@ public class KillBasedTeleportSystem : MonoBehaviour
     public Transform pointB;
 
     [Header("Teleport Settings")]
-    public float teleportRange = 8f; // How close player needs to be to teleport point
+    public float teleportRange = 3f; // How close player needs to be to teleport point
     public float teleportDelay = 0.5f;
 
     [Header("Effects")]

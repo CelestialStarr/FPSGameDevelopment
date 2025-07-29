@@ -1,4 +1,3 @@
-// ===== Updated BullerController.cs =====
 using UnityEngine;
 
 public class BullerController : MonoBehaviour
@@ -9,9 +8,8 @@ public class BullerController : MonoBehaviour
     public int damage = 20;
 
     [Header("Target Settings")]
-    public bool damageEnemy = false;        // Can damage enemies (for player bullets)
-    public bool damagePlayer = true;        // Can damage player (for enemy bullets)
-    public bool damageAmmoSources = false;  // Can damage ammo sources (for player bullets)
+    public bool damageEnemy = false;    // Can damage enemies (for player bullets)
+    public bool damagePlayer = true;    // Can damage player (for enemy bullets)
 
     [Header("Effects")]
     public GameObject laserImpact;      // Impact effect prefab
@@ -30,7 +28,7 @@ public class BullerController : MonoBehaviour
             rb.linearVelocity = transform.forward * moveSpeed;
         }
 
-        Debug.Log($"Bullet created - DamagePlayer: {damagePlayer}, DamageEnemy: {damageEnemy}, DamageAmmoSources: {damageAmmoSources}");
+        Debug.Log($"Bullet created - DamagePlayer: {damagePlayer}, DamageEnemy: {damageEnemy}");
     }
 
     void Update()
@@ -99,21 +97,8 @@ public class BullerController : MonoBehaviour
             shouldDestroy = true;
         }
 
-        // Check hit ammo source (NEW)
-        if (other.CompareTag("AmmoSource") && damageAmmoSources)
-        {
-            Debug.Log("Bullet hit ammo source!");
-            DestructibleAmmoSource ammoSource = other.GetComponent<DestructibleAmmoSource>();
-            if (ammoSource != null && !ammoSource.IsDestroyed())
-            {
-                ammoSource.TakeDamage(damage);
-                Debug.Log($"Ammo source took {damage} damage");
-            }
-            shouldDestroy = true;
-        }
-
         // Check hit environment
-        if (!other.isTrigger && !other.CompareTag("Player") && !other.CompareTag("Enemy") && !other.CompareTag("AmmoSource"))
+        if (!other.isTrigger && !other.CompareTag("Player") && !other.CompareTag("Enemy"))
         {
             Debug.Log("Bullet hit environment");
             shouldDestroy = true;
@@ -181,13 +166,11 @@ public class BullerController : MonoBehaviour
         damage = newDamage;
     }
 
-    // Updated to support ammo sources
-    public void SetTargetType(bool canHitPlayer, bool canHitEnemies, bool canHitAmmoSources = false)
+    public void SetTargetType(bool canHitPlayer, bool canHitEnemies)
     {
         damagePlayer = canHitPlayer;
         damageEnemy = canHitEnemies;
-        damageAmmoSources = canHitAmmoSources;
-        Debug.Log($"Bullet target set - Player: {damagePlayer}, Enemy: {damageEnemy}, AmmoSources: {damageAmmoSources}");
+        Debug.Log($"Bullet target set - Player: {damagePlayer}, Enemy: {damageEnemy}");
     }
 
     public void SetSpeed(float newSpeed)
