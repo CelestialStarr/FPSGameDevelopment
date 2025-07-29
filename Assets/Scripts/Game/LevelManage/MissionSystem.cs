@@ -128,13 +128,13 @@ public class MissionSystem : MonoBehaviour
                     currentMissions.Add(new Mission("kill_enemies", $"Eliminate {level1_KillsRequired} enemies", level1_KillsRequired, false));
 
                 if (level1_CornAmmoRequired > 0 && level1_ShowCornTask)
-                    currentMissions.Add(new Mission("collect_corn", $"Collect {level1_CornAmmoRequired} Corn ammo", level1_CornAmmoRequired, false));
+                    currentMissions.Add(new Mission("collect_corn", $"Collect {level1_CornAmmoRequired} Corn ammo packs", level1_CornAmmoRequired, false));
 
                 if (level1_MeatAmmoRequired > 0 && level1_ShowMeatTask)
-                    currentMissions.Add(new Mission("collect_meat", $"Collect {level1_MeatAmmoRequired} Meat ammo", level1_MeatAmmoRequired, false));
+                    currentMissions.Add(new Mission("collect_meat", $"Collect {level1_MeatAmmoRequired} Meat ammo packs", level1_MeatAmmoRequired, false));
 
                 if (level1_VegetableAmmoRequired > 0 && level1_ShowVegetableTask)
-                    currentMissions.Add(new Mission("collect_vegetable", $"Collect {level1_VegetableAmmoRequired} Vegetable ammo", level1_VegetableAmmoRequired, false));
+                    currentMissions.Add(new Mission("collect_vegetable", $"Collect {level1_VegetableAmmoRequired} Vege ammo packs", level1_VegetableAmmoRequired, false));
                 break;
 
             case SceneType.Level2:
@@ -142,13 +142,13 @@ public class MissionSystem : MonoBehaviour
                     currentMissions.Add(new Mission("kill_enemies", $"Eliminate {level2_KillsRequired} enemies", level2_KillsRequired, false));
 
                 if (level2_CornAmmoRequired > 0 && level2_ShowCornTask)
-                    currentMissions.Add(new Mission("collect_corn", $"Collect {level2_CornAmmoRequired} Corn ammo", level2_CornAmmoRequired, false));
+                    currentMissions.Add(new Mission("collect_corn", $"Collect {level2_CornAmmoRequired} Corn ammo packs", level2_CornAmmoRequired, false));
 
                 if (level2_MeatAmmoRequired > 0 && level2_ShowMeatTask)
-                    currentMissions.Add(new Mission("collect_meat", $"Collect {level2_MeatAmmoRequired} Meat ammo", level2_MeatAmmoRequired, false));
+                    currentMissions.Add(new Mission("collect_meat", $"Collect {level2_MeatAmmoRequired} Meat ammo packs", level2_MeatAmmoRequired, false));
 
                 if (level2_VegetableAmmoRequired > 0 && level2_ShowVegetableTask)
-                    currentMissions.Add(new Mission("collect_vegetable", $"Collect {level2_VegetableAmmoRequired} Vegetable ammo", level2_VegetableAmmoRequired, false));
+                    currentMissions.Add(new Mission("collect_vegetable", $"Collect {level2_VegetableAmmoRequired} Vege ammo packs", level2_VegetableAmmoRequired, false));
                 break;
 
             case SceneType.Level3:
@@ -156,13 +156,13 @@ public class MissionSystem : MonoBehaviour
                     currentMissions.Add(new Mission("kill_enemies", $"Eliminate {level3_KillsRequired} enemies", level3_KillsRequired, false));
 
                 if (level3_CornAmmoRequired > 0 && level3_ShowCornTask)
-                    currentMissions.Add(new Mission("collect_corn", $"Collect {level3_CornAmmoRequired} Corn ammo", level3_CornAmmoRequired, false));
+                    currentMissions.Add(new Mission("collect_corn", $"Collect {level3_CornAmmoRequired} Corn ammo packs", level3_CornAmmoRequired, false));
 
                 if (level3_MeatAmmoRequired > 0 && level3_ShowMeatTask)
-                    currentMissions.Add(new Mission("collect_meat", $"Collect {level3_MeatAmmoRequired} Meat ammo", level3_MeatAmmoRequired, false));
+                    currentMissions.Add(new Mission("collect_meat", $"Collect {level3_MeatAmmoRequired} Meat ammo packs", level3_MeatAmmoRequired, false));
 
                 if (level3_VegetableAmmoRequired > 0 && level3_ShowVegetableTask)
-                    currentMissions.Add(new Mission("collect_vegetable", $"Collect {level3_VegetableAmmoRequired} Vegetable ammo", level3_VegetableAmmoRequired, false));
+                    currentMissions.Add(new Mission("collect_vegetable", $"Collect {level3_VegetableAmmoRequired} Vege ammo packs", level3_VegetableAmmoRequired, false));
 
                 if (level3_BossRequired && level3_ShowBossTask)
                     currentMissions.Add(new Mission("defeat_boss", "Defeat the Boss", 1, false));
