@@ -232,6 +232,11 @@ public class AmmoPickup : MonoBehaviour
                 // Add ammo to the corresponding weapon
                 targetGun.currentAmmo += canPickup;
 
+                if (MissionSystem.Instance != null)
+                {
+                    MissionSystem.Instance.OnAmmoCollected(ammoType);
+                }
+
                 // Update UI if it's the currently equipped weapon
                 UpdateCurrentWeaponUI(targetGun);
 

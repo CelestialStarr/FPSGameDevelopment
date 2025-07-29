@@ -3,9 +3,7 @@ using UnityEngine.UI;
 
 public class KillBasedTeleportSystem : MonoBehaviour
 {
-    [Header("Kill Requirements")]
-    public int requiredKills = 5;
-    private int currentKills = 0;
+    public static KillBasedTeleportSystem Instance;
 
     [Header("Teleport Points")]
     public Transform pointA;
@@ -19,25 +17,19 @@ public class KillBasedTeleportSystem : MonoBehaviour
     public GameObject teleportEffect;
     public AudioClip teleportSound;
 
-    [Header("UI")]
-    public GameObject killCountUI;
-    public Text killCountText;
+    [Header("UI - Only Essential")]
     public GameObject teleportPromptUI;
     public Text teleportPromptText;
-
-    [Header("Story Dialog")]
-    public GameObject storyDialogUI;
-    public Text storyDialogText;
-    public string[] storyMessages = {
-        "Well done!",
-        "You've cleared the area.",
-        "Press T near a teleport point to travel."
-    };
 
     private bool teleportUnlocked = false;
     private bool isNearTeleportPoint = false;
     private Transform nearestTeleportPoint;
     private AudioSource audioSource;
+
+    void Awake()
+    {
+        Instance = this;
+    }
 
     void Start()
     {
@@ -49,15 +41,10 @@ public class KillBasedTeleportSystem : MonoBehaviour
         }
 
         // Initialize UI
-        UpdateKillCountUI();
-
         if (teleportPromptUI != null)
             teleportPromptUI.SetActive(false);
 
-        if (storyDialogUI != null)
-            storyDialogUI.SetActive(false);
-
-        Debug.Log($"Teleport system initialized - Need {requiredKills} kills to unlock");
+        Debug.Log("Simplified teleport system initialized");
     }
 
     void Update()
@@ -123,68 +110,11 @@ public class KillBasedTeleportSystem : MonoBehaviour
         }
     }
 
-    public void OnEnemyKilled()
-    {
-        if (teleportUnlocked) return; // Already unlocked
-
-        currentKills++;
-        UpdateKillCountUI();
-
-        Debug.Log($"Enemy killed! Count: {currentKills}/{requiredKills}");
-
-        if (currentKills >= requiredKills)
-        {
-            UnlockTeleport();
-        }
-    }
-
-    void UpdateKillCountUI()
-    {
-        if (killCountUI != null && killCountText != null)
-        {
-            if (!teleportUnlocked)
-            {
-                killCountUI.SetActive(true);
-                killCountText.text = $"Enemies defeated: {currentKills}/{requiredKills}";
-            }
-            else
-            {
-                killCountUI.SetActive(false);
-            }
-        }
-    }
-
-    void UnlockTeleport()
+    // 公共方法：由故事系统调用来解锁传送
+    public void UnlockTeleportFromStory()
     {
         teleportUnlocked = true;
-
-        Debug.Log("Teleport system unlocked!");
-
-        // Hide kill count UI
-        UpdateKillCountUI();
-
-        // Show story dialog
-        StartCoroutine(ShowStoryDialog());
-    }
-
-    System.Collections.IEnumerator ShowStoryDialog()
-    {
-        if (storyDialogUI != null && storyMessages.Length > 0)
-        {
-            storyDialogUI.SetActive(true);
-
-            for (int i = 0; i < storyMessages.Length; i++)
-            {
-                if (storyDialogText != null)
-                {
-                    storyDialogText.text = storyMessages[i];
-                }
-
-                yield return new WaitForSeconds(2f); // Show each message for 2 seconds
-            }
-
-            storyDialogUI.SetActive(false);
-        }
+        Debug.Log("Teleport unlocked by story system!");
     }
 
     System.Collections.IEnumerator TeleportPlayer()
@@ -245,31 +175,28 @@ public class KillBasedTeleportSystem : MonoBehaviour
         Debug.Log($"Player teleported from {nearestTeleportPoint.name} to {targetPoint.name}");
     }
 
-    // Public methods for external control
-    public void SetRequiredKills(int kills)
-    {
-        requiredKills = kills;
-        UpdateKillCountUI();
-    }
-
-    public void ResetKillCount()
-    {
-        currentKills = 0;
-        teleportUnlocked = false;
-        UpdateKillCountUI();
-
-        if (teleportPromptUI != null)
-            teleportPromptUI.SetActive(false);
-    }
-
+    // 公共方法：检查传送是否已解锁
     public bool IsTeleportUnlocked()
     {
         return teleportUnlocked;
     }
 
-    public int GetCurrentKills()
+    // 重置传送系统（测试用）
+    public void ResetTeleportSystem()
     {
-        return currentKills;
+        teleportUnlocked = false;
+
+        if (teleportPromptUI != null)
+            teleportPromptUI.SetActive(false);
+
+        Debug.Log("Teleport system reset");
+    }
+
+    // 手动解锁传送（测试用）
+    [ContextMenu("Unlock Teleport")]
+    public void ManualUnlockTeleport()
+    {
+        UnlockTeleportFromStory();
     }
 
     // Debug visualization

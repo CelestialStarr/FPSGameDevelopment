@@ -199,30 +199,37 @@ public class EnemyHealthController : MonoBehaviour
             }
         }
 
-        // 通知传送系统敌人死亡
-        KillBasedTeleportSystem teleportSystem = FindObjectOfType<KillBasedTeleportSystem>();
-        if (teleportSystem != null)
-        {
-            teleportSystem.OnEnemyKilled();
-            Debug.Log("Notified teleport system of enemy death!");
-        }
-        else
-        {
-            Debug.LogWarning("Could not find KillBasedTeleportSystem in scene!");
-        }
+        // 删除这两段代码，因为我们改成基于时间触发了：
 
-        // 添加这个：通知故事系统敌人死亡
-        if (SimpleStorySystem.Instance != null)
+        // // 通知传送系统敌人死亡
+        // KillBasedTeleportSystem teleportSystem = FindObjectOfType<KillBasedTeleportSystem>();
+        // if (teleportSystem != null)
+        // {
+        //     teleportSystem.OnEnemyKilled();
+        //     Debug.Log("Notified teleport system of enemy death!");
+        // }
+        // else
+        // {
+        //     Debug.LogWarning("Could not find KillBasedTeleportSystem in scene!");
+        // }
+
+        // // 添加这个：通知故事系统敌人死亡
+        // if (SimpleStorySystem.Instance != null)
+        // {
+        //     SimpleStorySystem.Instance.OnEnemyKilled();
+        //     Debug.Log("Notified story system of enemy death!");
+        // }
+        // else
+        // {
+        //     Debug.LogWarning("Could not find SimpleStorySystem in scene!");
+        // }
+
+        // 如果你还有任务系统需要击杀计数，可以保留这个：
+        if (MissionSystem.Instance != null)
         {
-            SimpleStorySystem.Instance.OnEnemyKilled();
-            Debug.Log("Notified story system of enemy death!");
-        }
-        else
-        {
-            Debug.LogWarning("Could not find SimpleStorySystem in scene!");
+            MissionSystem.Instance.OnEnemyKilled();
         }
     }
-
     void DisableEnemyComponents()
     {
         // 禁用AI和移动

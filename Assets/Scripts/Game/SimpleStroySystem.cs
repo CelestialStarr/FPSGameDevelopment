@@ -17,8 +17,10 @@ public class SimpleStorySystem : MonoBehaviour
     public float typewriterSpeed = 0.05f;
     public AudioClip textBeepSound;
 
-    [Header("Game Settings")]
-    public int enemiesRequiredForTeleport = 10;
+    [Header("Time-Based Teleport Unlock Settings")]
+    [SerializeField] private float teleportUnlockTime = 30f; // 默认30秒后解锁传送
+
+    [Header("Current Scene")]
     public SceneType currentScene = SceneType.Level1;
 
     // 私有变量
@@ -31,17 +33,13 @@ public class SimpleStorySystem : MonoBehaviour
     private System.Action onDialogueComplete;
 
     // 跨场景数据存储到PlayerPrefs（更稳定）
-    private int totalKills
-    {
-        get { return PlayerPrefs.GetInt("StorySystem_TotalKills", 0); }
-        set { PlayerPrefs.SetInt("StorySystem_TotalKills", value); }
-    }
-
     private bool teleportUnlocked
     {
         get { return PlayerPrefs.GetInt("StorySystem_TeleportUnlocked", 0) == 1; }
         set { PlayerPrefs.SetInt("StorySystem_TeleportUnlocked", value ? 1 : 0); }
     }
+
+    private bool teleportDialogueShown = false;
 
     void Awake()
     {
@@ -63,6 +61,8 @@ public class SimpleStorySystem : MonoBehaviour
         {
             case SceneType.Level1:
                 PlayLevel1StartStory();
+                // 启动传送解锁计时器
+                StartCoroutine(TeleportUnlockTimer());
                 break;
             case SceneType.Level2:
                 PlayLevel2StartStory();
@@ -87,6 +87,19 @@ public class SimpleStorySystem : MonoBehaviour
         }
     }
 
+    // 传送解锁计时器
+    private IEnumerator TeleportUnlockTimer()
+    {
+        if (teleportUnlocked || teleportDialogueShown) yield break;
+
+        yield return new WaitForSeconds(teleportUnlockTime);
+
+        if (!teleportDialogueShown && !isDialogueActive)
+        {
+            PlayTeleportUnlockStory();
+        }
+    }
+
     #region 所有剧情节点
 
     /// <summary>
@@ -106,20 +119,30 @@ public class SimpleStorySystem : MonoBehaviour
     }
 
     /// <summary>
-    /// 第一关中间 - 传送解锁剧情
+    /// 第一关中间 - 传送解锁剧情（基于时间触发）
     /// </summary>
     private void PlayTeleportUnlockStory()
     {
+        if (teleportDialogueShown) return;
+
         teleportUnlocked = true;
+        teleportDialogueShown = true;
+
         var dialogue = new List<DialogueEntry>
-    {
-        new DialogueEntry("???", "You are beginning to awaken... your abilities are returning."),
-        new DialogueEntry("???", "Are you beginning to remember something? Your skills... are not like ordinary ingredients."),
-        new DialogueEntry("", "[Teleportation function has been unlocked]"),
-        new DialogueEntry("", "[Find teleport points in the area and press T to teleport between them]")
-    };
+        {
+            new DialogueEntry("???", "You are beginning to awaken... your abilities are returning."),
+            new DialogueEntry("???", "Are you beginning to remember something? Your skills... are not like ordinary ingredients."),
+            new DialogueEntry("", "[Teleportation function has been unlocked]"),
+            new DialogueEntry("", "[Find teleport points in the area and press T to teleport between them]")
+        };
+
         StartDialogue(dialogue, () => {
             Debug.Log("传送功能已解锁！");
+            // 通知传送系统解锁
+            if (KillBasedTeleportSystem.Instance != null)
+            {
+                KillBasedTeleportSystem.Instance.UnlockTeleportFromStory();
+            }
         });
     }
 
@@ -242,22 +265,6 @@ public class SimpleStorySystem : MonoBehaviour
     #region 触发器和公共方法
 
     /// <summary>
-    /// 敌人被杀死时调用
-    /// </summary>
-    public void OnEnemyKilled()
-    {
-        if (teleportUnlocked) return;
-
-        totalKills++;
-        Debug.Log($"总击杀数: {totalKills}/{enemiesRequiredForTeleport}");
-
-        if (totalKills >= enemiesRequiredForTeleport)
-        {
-            PlayTeleportUnlockStory();
-        }
-    }
-
-    /// <summary>
     /// 播放自定义剧情
     /// </summary>
     public void PlayCustomStory(List<DialogueEntry> dialogue)
@@ -270,9 +277,21 @@ public class SimpleStorySystem : MonoBehaviour
     /// </summary>
     public void ResetStoryData()
     {
-        PlayerPrefs.DeleteKey("StorySystem_TotalKills");
         PlayerPrefs.DeleteKey("StorySystem_TeleportUnlocked");
+        teleportDialogueShown = false;
         Debug.Log("剧情数据已重置");
+    }
+
+    /// <summary>
+    /// 手动触发传送解锁（测试用）
+    /// </summary>
+    [ContextMenu("Unlock Teleport Now")]
+    public void UnlockTeleportNow()
+    {
+        if (!teleportDialogueShown && !isDialogueActive)
+        {
+            PlayTeleportUnlockStory();
+        }
     }
 
     #endregion
