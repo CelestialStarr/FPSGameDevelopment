@@ -118,35 +118,29 @@ public class LevelComplete : MonoBehaviour
         if (levelCompletePanel != null)
             levelCompletePanel.SetActive(false);
 
-        // 加载下一关
-        if (LevelTimer.instance != null)
+        // 直接用GameManager，删除LevelTimer的调用
+        string currentScene = SceneManager.GetActiveScene().name;
+
+        Debug.Log($"当前场景: {currentScene}"); // 调试用
+
+        if (currentScene == "Level1")
         {
-            LevelTimer.instance.LoadNextLevel();
+            Debug.Log("跳转到Level2");
+            GameManager.Instance.LoadLevel2();
+        }
+        else if (currentScene == "Level2")
+        {
+            Debug.Log("跳转到Level3");
+            GameManager.Instance.LoadLevel3();
+        }
+        else if (currentScene == "Level3")
+        {
+            Debug.Log("跳转到CutScene");
+            GameManager.Instance.LoadCutScene();
         }
         else
         {
-            LoadNextLevelDirectly();
-        }
-    }
-
-    private void LoadNextLevelDirectly()
-    {
-        string currentScene = SceneManager.GetActiveScene().name.ToLower();
-
-        if (currentScene.Contains("level1"))
-        {
-            SceneManager.LoadScene("Level2");
-        }
-        else if (currentScene.Contains("level2"))
-        {
-            SceneManager.LoadScene("Level3");
-        }
-        else if (currentScene.Contains("level3"))
-        {
-            if (GameManager.Instance != null)
-                GameManager.Instance.LoadGameOver();
-            else
-                SceneManager.LoadScene("CutScene");
+            Debug.LogError($"未知场景: {currentScene}");
         }
     }
 
