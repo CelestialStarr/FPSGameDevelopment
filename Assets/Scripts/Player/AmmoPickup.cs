@@ -124,9 +124,11 @@ public class AmmoPickup : MonoBehaviour
     void SetVisualByType()
     {
         Renderer renderer = GetComponent<Renderer>();
-        if (renderer != null)
+        if (renderer != null && renderer.sharedMaterial != null)
         {
-            Material mat = renderer.material;
+            // 创建材质实例，避免修改原始材质
+            Material mat = new Material(renderer.sharedMaterial);
+            renderer.material = mat; // 这会自动创建实例
 
             // Set color based on ammo type
             switch (ammoType)
@@ -141,6 +143,10 @@ public class AmmoPickup : MonoBehaviour
                     mat.color = pepperColor;
                     break;
             }
+        }
+        else
+        {
+            Debug.LogWarning($"[AmmoPickup] {gameObject.name} 没有Renderer或材质！");
         }
 
         // Set Point Light color if exists
