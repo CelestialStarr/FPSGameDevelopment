@@ -19,37 +19,32 @@ public class AnimationState
 
 public class DumplingKing_Enemy : MonoBehaviour
 {
-    [Header("动画状态集合（如 born, walk, roll, summon）")]
     public List<AnimationState> animations;
-
-    [Header("非循环动画播放完后延迟（秒）")]
     public float animationDelay = 0.1f;
-
-    [Header("初始状态")]
     public string initialState = "born";
+    public bool canMove = false;
 
-    [Header("玩家对象")]
+    [Header("玩家")]
     public Transform player;
 
-    [Header("追踪参数")]
+    [Header("移动参数")]
     public float moveSpeed = 1.5f;
 
-    [Header("技能触发控制")]
+    [Header("技能参数")]
     public float skillCheckInterval = 5f;
     public float skillTriggerProbability = 0.4f;
 
-    [Header("翻滚攻击设置")]
+    [Header("召唤设置")]
+    public GameObject dumplingMinionPrefab;
+    public Vector3 summonOffset = new Vector3(0, 0.5f, 1.5f);
+
+    [Header("翻滚设置")]
     public float rollSpeed = 6f;
     public float rollDuration = 1f;
     public float rollHitRadius = 1f;
     public int rollDamage = 10;
 
-    [Header("召唤技能设置")]
-    public GameObject dumplingMinionPrefab;   // 小饺子 prefab
-    public Vector3 summonOffset = new Vector3(0, 0.5f, 1.5f); // 生成位置偏移
-
     private float skillCheckTimer = 0f;
-    private bool bornPlayed = false;
     private bool isUsingSkill = false;
     private bool hasDealtDamageThisRoll = false;
     private string currentState = "";
@@ -64,62 +59,66 @@ public class DumplingKing_Enemy : MonoBehaviour
 
         StartCoroutine(PlayAnimationState(initialState, false, () =>
         {
-            bornPlayed = true; // ✅ 播放完出生动画才开始移动
+            canMove = true;
             StartCoroutine(PlayAnimationState("walk", true));
         }));
     }
 
-
     void Update()
     {
-        if (!bornPlayed || player == null || isUsingSkill) return;
+        if (!canMove || isUsingSkill || player == null) return;
 
-        // 直接看向玩家
+        // 朝向玩家
         Vector3 targetPos = player.position;
-        targetPos.y = transform.position.y; // 保持 y 不变，避免仰头低头
+        targetPos.y = transform.position.y;
         transform.LookAt(targetPos);
 
-        // 直接向前移动（按自身 forward 方向）
+        // 追踪玩家
         transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime);
 
-        // 技能触发检查
+        // 技能检测
         skillCheckTimer += Time.deltaTime;
         if (skillCheckTimer >= skillCheckInterval)
         {
             skillCheckTimer = 0f;
             if (Random.value < skillTriggerProbability)
-            {
                 StartCoroutine(TriggerRandomSkill());
-            }
         }
     }
-
 
     IEnumerator PlayAnimationState(string stateName, bool loop, System.Action onComplete = null)
     {
         AnimationState state = animations.Find(s => s.stateName == stateName);
         if (state == null)
         {
-            Debug.LogWarning($"找不到动画状态：{stateName}");
+            Debug.LogWarning($"未找到动画状态：{stateName}");
             yield break;
         }
 
         currentState = stateName;
 
+        // 确保所有部件激活再播放
         foreach (var limb in state.limbAnimations)
-        {
+            if (limb.animator && limb.animator.gameObject)
+                limb.animator.gameObject.SetActive(true);
+
+        // 播放所有 limb 动画
+        foreach (var limb in state.limbAnimations)
             if (limb.animator && limb.clip)
                 limb.animator.Play(limb.clip.name);
-        }
 
         if (!loop)
         {
-            float duration = 0f;
+            float maxDuration = 0f;
             foreach (var limb in state.limbAnimations)
-                if (limb.clip && limb.clip.length > duration)
-                    duration = limb.clip.length;
+                if (limb.clip && limb.clip.length > maxDuration)
+                    maxDuration = limb.clip.length;
 
-            yield return new WaitForSeconds(duration + animationDelay);
+            yield return new WaitForSeconds(maxDuration + animationDelay);
+
+            if (stateName == "roll")
+                ShowAllLimbs();  // 恢复 limb
+
             onComplete?.Invoke();
         }
     }
@@ -127,11 +126,12 @@ public class DumplingKing_Enemy : MonoBehaviour
     IEnumerator TriggerRandomSkill()
     {
         isUsingSkill = true;
+        canMove = false;
 
-        int skillIndex = Random.Range(0, 2); // 0: roll, 1: summon
-
-        if (skillIndex == 0)
+        int index = Random.Range(0, 2); // 0-roll, 1-summon
+        if (index == 0)
         {
+            HideLimbsDuringRoll();
             yield return StartCoroutine(PlayAnimationState("roll", false, () =>
             {
                 StartCoroutine(RollTowardPlayer());
@@ -144,12 +144,14 @@ public class DumplingKing_Enemy : MonoBehaviour
                 SummonMinion();
                 StartCoroutine(PlayAnimationState("walk", true));
                 isUsingSkill = false;
+                canMove = true;
             }));
         }
     }
 
     IEnumerator RollTowardPlayer()
     {
+        Debug.Log("开始翻滚追踪");
         float timer = 0f;
         hasDealtDamageThisRoll = false;
 
@@ -158,35 +160,33 @@ public class DumplingKing_Enemy : MonoBehaviour
             if (player == null) break;
 
             Vector3 dir = player.position - transform.position;
-            Vector3 flatDir = new Vector3(dir.x, 0f, dir.z);
-            if (flatDir.magnitude > 0.01f)
+            dir.y = 0f;
+
+            if (dir.magnitude > 0.01f)
             {
-                transform.rotation = Quaternion.LookRotation(flatDir);
-                transform.position += flatDir.normalized * rollSpeed * Time.deltaTime;
+                transform.rotation = Quaternion.LookRotation(dir);
+                transform.position += dir.normalized * rollSpeed * Time.deltaTime;
             }
 
-            if (!hasDealtDamageThisRoll)
+            if (!hasDealtDamageThisRoll && Vector3.Distance(transform.position, player.position) <= rollHitRadius)
             {
-                float dist = Vector3.Distance(transform.position, player.position);
-                if (dist <= rollHitRadius)
-                {
-                    hasDealtDamageThisRoll = true;
-                    Debug.Log($"翻滚命中玩家！造成 {rollDamage} 点伤害！");
-                    // player.GetComponent<PlayerHealth>()?.TakeDamage(rollDamage);
-                }
+                hasDealtDamageThisRoll = true;
+                Debug.Log($"翻滚命中玩家，造成 {rollDamage} 点伤害！");
             }
 
             timer += Time.deltaTime;
             yield return null;
         }
 
+        ShowAllLimbs();
         StartCoroutine(PlayAnimationState("walk", true));
         isUsingSkill = false;
+        canMove = true;
     }
 
     void SummonMinion()
     {
-        if (dumplingMinionPrefab != null)
+        if (dumplingMinionPrefab)
         {
             Vector3 spawnPos = transform.position + transform.forward * summonOffset.z + Vector3.up * summonOffset.y;
             Instantiate(dumplingMinionPrefab, spawnPos, Quaternion.identity);
@@ -194,9 +194,33 @@ public class DumplingKing_Enemy : MonoBehaviour
         }
     }
 
+    void HideLimbsDuringRoll()
+    {
+        foreach (var state in animations)
+        {
+            foreach (var limb in state.limbAnimations)
+            {
+                if (limb.animator && limb.animator.gameObject.name != "Body")
+                    limb.animator.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    void ShowAllLimbs()
+    {
+        foreach (var state in animations)
+        {
+            foreach (var limb in state.limbAnimations)
+            {
+                if (limb.animator)
+                    limb.animator.gameObject.SetActive(true);
+            }
+        }
+    }
+
     void OnDrawGizmos()
     {
-        if (player != null)
+        if (player)
         {
             Gizmos.color = Color.yellow;
             Gizmos.DrawLine(transform.position + Vector3.up * 0.5f, player.position + Vector3.up * 0.5f);
