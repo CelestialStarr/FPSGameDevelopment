@@ -1,9 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
-public class SimpleTeleportSystem : MonoBehaviour
+public class TeleportSystem : MonoBehaviour
 {
-    public static SimpleTeleportSystem Instance;
+    public static TeleportSystem Instance;
 
     [Header("Teleport Points")]
     public Transform pointA;
@@ -59,7 +60,24 @@ public class SimpleTeleportSystem : MonoBehaviour
 
     void CheckPlayerNearTeleportPoints()
     {
-        if (PlayerController.instance == null) return;
+        // 检查PlayerController是否存在
+        if (PlayerController.instance == null)
+        {
+            isNearTeleportPoint = false;
+            if (teleportPromptUI != null)
+                teleportPromptUI.SetActive(false);
+            return;
+        }
+
+        // 检查传送点是否存在
+        if (pointA == null || pointB == null)
+        {
+            isNearTeleportPoint = false;
+            nearestTeleportPoint = null;
+            if (teleportPromptUI != null)
+                teleportPromptUI.SetActive(false);
+            return;
+        }
 
         Vector3 playerPos = PlayerController.instance.transform.position;
         bool wasNear = isNearTeleportPoint;
@@ -99,7 +117,7 @@ public class SimpleTeleportSystem : MonoBehaviour
         {
             teleportPromptUI.SetActive(isNearTeleportPoint);
 
-            if (isNearTeleportPoint && teleportPromptText != null)
+            if (isNearTeleportPoint && teleportPromptText != null && nearestTeleportPoint != null)
             {
                 string targetName = (nearestTeleportPoint == pointA) ? "Point B" : "Point A";
                 teleportPromptText.text = $"Press T to teleport to {targetName}";
@@ -107,9 +125,10 @@ public class SimpleTeleportSystem : MonoBehaviour
         }
     }
 
-    System.Collections.IEnumerator TeleportPlayer()
+    IEnumerator TeleportPlayer()
     {
         if (!isNearTeleportPoint || nearestTeleportPoint == null) yield break;
+        if (PlayerController.instance == null) yield break;
 
         GameObject player = PlayerController.instance.gameObject;
 
@@ -134,6 +153,15 @@ public class SimpleTeleportSystem : MonoBehaviour
         // Determine target point (teleport to the other point)
         Transform targetPoint = (nearestTeleportPoint == pointA) ? pointB : pointA;
 
+        // 再次检查目标点是否存在
+        if (targetPoint == null)
+        {
+            // 重新启用玩家控制
+            if (PlayerController.instance != null)
+                PlayerController.instance.enabled = true;
+            yield break;
+        }
+
         // Teleport player
         CharacterController charController = player.GetComponent<CharacterController>();
         if (charController != null)
@@ -157,12 +185,13 @@ public class SimpleTeleportSystem : MonoBehaviour
         }
 
         // Re-enable player control
-        PlayerController.instance.enabled = true;
+        if (PlayerController.instance != null)
+            PlayerController.instance.enabled = true;
 
         // Update UI (player is now near different point)
         CheckPlayerNearTeleportPoints();
 
-        Debug.Log($"Player teleported from {nearestTeleportPoint.name} to {targetPoint.name}");
+        Debug.Log($"Player teleported to {targetPoint.name}");
     }
 
     // Debug visualization

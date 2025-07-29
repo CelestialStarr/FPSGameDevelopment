@@ -147,7 +147,7 @@ public class SimpleStorySystem : MonoBehaviour
         StartDialogue(dialogue, () => {
             Debug.Log("传送功能已解锁！");
             // 通知传送系统解锁
-            if (SimpleTeleportSystem.Instance != null)
+            if (TeleportSystem.Instance != null)
             {
                 // 新的传送系统不需要解锁，直接可用
                 Debug.Log("传送系统已经可用！");
