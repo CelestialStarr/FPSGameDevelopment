@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.Video;
 
 public class SimpleStorySystem : MonoBehaviour
 {
@@ -23,6 +24,12 @@ public class SimpleStorySystem : MonoBehaviour
 
     [Header("Current Scene")]
     public SceneType currentScene = SceneType.Level1;
+
+    [Header("Video Settings (CutScene Only)")]
+    public VideoPlayer videoPlayer;
+    public VideoClip videoClip;
+    public RawImage videoDisplay; // 用于显示视频的UI
+    public Canvas videoCanvas;    // 视频Canvas
 
     // 私有变量
     private bool isTyping = false;
@@ -245,6 +252,8 @@ public class SimpleStorySystem : MonoBehaviour
         });
     }
 
+    // 在你的SimpleStorySystem.cs中，修改PlayCutSceneStory方法：
+
     public void PlayCutSceneStory()
     {
         var dialogue = new List<DialogueEntry>
@@ -259,18 +268,7 @@ public class SimpleStorySystem : MonoBehaviour
 
         StartDialogue(dialogue, () => {
             Debug.Log("剧情结束，准备播放视频");
-
-            // 查找视频播放器并开始播放
-            var videoPlayer = FindObjectOfType<CutSceneVideoPlayer>();
-            if (videoPlayer != null)
-            {
-                videoPlayer.PlayVideo();
-            }
-            else
-            {
-                Debug.LogWarning("未找到视频播放器，直接跳转GameOver");
-                SceneManager.LoadScene("GameOver");
-            }
+            StartCoroutine(PlayVideoAfterDialogue());
         });
     }
     #endregion
@@ -305,6 +303,124 @@ public class SimpleStorySystem : MonoBehaviour
         {
             PlayTeleportUnlockStory();
         }
+    }
+
+    private IEnumerator PlayVideoAfterDialogue()
+    {
+        Debug.Log("=== 开始视频播放调试 ===");
+
+        if (videoPlayer == null || videoClip == null)
+        {
+            Debug.LogError("videoPlayer 或 videoClip 为空！");
+            SceneManager.LoadScene("GameOver");
+            yield break;
+        }
+
+        // 隐藏所有UI
+        Canvas[] allCanvases = FindObjectsOfType<Canvas>();
+        foreach (Canvas canvas in allCanvases)
+        {
+            canvas.gameObject.SetActive(false);
+        }
+
+        Camera mainCamera = Camera.main;
+
+        // 修改相机设置
+        CameraClearFlags originalClearFlags = mainCamera.clearFlags;
+        Color originalBackgroundColor = mainCamera.backgroundColor;
+
+        mainCamera.clearFlags = CameraClearFlags.SolidColor;
+        mainCamera.backgroundColor = Color.black;
+
+        // 创建VideoQuad
+        GameObject videoQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        videoQuad.name = "VideoQuad";
+        Destroy(videoQuad.GetComponent<Collider>());
+
+        // 设置Quad位置
+        float distance = 1f;
+        videoQuad.transform.position = mainCamera.transform.position + mainCamera.transform.forward * distance;
+        videoQuad.transform.rotation = mainCamera.transform.rotation;
+
+        // 创建RenderTexture和材质
+        RenderTexture renderTexture = new RenderTexture(1920, 1080, 0);
+        renderTexture.Create();
+
+        videoPlayer.clip = videoClip;
+        videoPlayer.renderMode = VideoRenderMode.RenderTexture;
+        videoPlayer.targetTexture = renderTexture;
+        videoPlayer.audioOutputMode = VideoAudioOutputMode.Direct;
+
+        Material videoMaterial = new Material(Shader.Find("Unlit/Texture"));
+        videoMaterial.mainTexture = renderTexture;
+        videoQuad.GetComponent<Renderer>().material = videoMaterial;
+
+        // 准备视频以获取正确的尺寸信息
+        videoPlayer.Prepare();
+
+        while (!videoPlayer.isPrepared)
+        {
+            yield return null;
+        }
+
+        Debug.Log($"视频分辨率: {videoPlayer.width} x {videoPlayer.height}");
+        Debug.Log($"屏幕分辨率: {Screen.width} x {Screen.height}");
+        Debug.Log($"相机视野: {mainCamera.fieldOfView}");
+
+        // **重要：根据视频实际比例和屏幕比例计算正确的Quad尺寸**
+        float videoAspectRatio = (float)videoPlayer.width / videoPlayer.height;
+        float screenAspectRatio = (float)Screen.width / Screen.height;
+
+        Debug.Log($"视频宽高比: {videoAspectRatio}");
+        Debug.Log($"屏幕宽高比: {screenAspectRatio}");
+
+        // 计算填满屏幕需要的尺寸
+        float screenHeight = 2.0f * distance * Mathf.Tan(mainCamera.fieldOfView * 0.5f * Mathf.Deg2Rad);
+        float screenWidth = screenHeight * screenAspectRatio;
+
+        float quadWidth, quadHeight;
+
+        if (videoAspectRatio > screenAspectRatio)
+        {
+            // 视频比屏幕更宽，以宽度为准
+            quadWidth = screenWidth;
+            quadHeight = screenWidth / videoAspectRatio;
+        }
+        else
+        {
+            // 视频比屏幕更高，以高度为准
+            quadHeight = screenHeight;
+            quadWidth = screenHeight * videoAspectRatio;
+        }
+
+        videoQuad.transform.localScale = new Vector3(quadWidth, quadHeight, 1f);
+
+        Debug.Log($"Quad最终尺寸: {quadWidth} x {quadHeight}");
+
+        videoPlayer.Play();
+        Debug.Log("视频开始播放");
+
+        // 等待播放完成
+        while (videoPlayer.isPlaying)
+        {
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                videoPlayer.Stop();
+                break;
+            }
+            yield return null;
+        }
+
+        // 恢复相机设置
+        mainCamera.clearFlags = originalClearFlags;
+        mainCamera.backgroundColor = originalBackgroundColor;
+
+        // 清理
+        Destroy(videoQuad);
+        Destroy(videoMaterial);
+        renderTexture.Release();
+
+        SceneManager.LoadScene("GameOver");
     }
 
     #endregion
