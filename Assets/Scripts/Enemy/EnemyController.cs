@@ -253,9 +253,14 @@ public class EnemyController : MonoBehaviour
 
     void UpdateMovementAnimation()
     {
-        if (agent != null && agent.isActiveAndEnabled)
+        if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
         {
             SetMovementAnimation(agent.remainingDistance > 0.25f);
+        }
+        else
+        {
+            // 如果agent不在NavMesh上，停止移动动画
+            SetMovementAnimation(false);
         }
     }
 
