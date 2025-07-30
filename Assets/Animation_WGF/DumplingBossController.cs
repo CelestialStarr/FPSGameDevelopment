@@ -4,115 +4,121 @@ using System.Collections;
 
 public class BossBehaviorController : MonoBehaviour
 {
-    public BossAnimationController animationController;
+    public BossAnimationController anim;
     public Transform player;
-    public float moveSpeed = 2f;
-    public int maxHealth = 100;
+    public NavMeshAgent agent;
 
+    [Header("Stats")]
+    public int maxHealth = 200;
+    public int rollDamage = 30;
+
+    [Header("Prefabs & FX")]
     public GameObject dumplingMinionPrefab;
-    public ParticleSystem summonEffect;
-    public int minionCount = 3;
-    public float summonRadius = 2f;
+    public GameObject healthPickupPrefab;
+    public ParticleSystem rollDustEffect;
+
+    [Header("Cooldowns")]
+    public float summonCooldown = 8f;
+    public float rollCooldown = 5f;
 
     private int currentHealth;
-    private bool isRolling = false;
-    private bool isSummoning = false;
-    private bool rollHit = false;
-    private NavMeshAgent agent;
+    private bool isRolling, isSummoning;
+    private float summonTimer, rollTimer;
+    private bool bornFinished;
 
     void Start()
     {
+        currentHealth = maxHealth;
         if (player == null)
             player = GameObject.FindGameObjectWithTag("Player").transform;
-
-        agent = GetComponent<NavMeshAgent>();
-        currentHealth = maxHealth;
-
-        animationController.PlayState(BossAnimationController.BossState.Born);
-        Invoke(nameof(StartWalk), 3f);
+        anim.PlayState(BossAnimationController.BossState.Born);
+        StartCoroutine(StartAfter(anim.bornDuration));
     }
 
-    void StartWalk()
+    IEnumerator StartAfter(float sec)
     {
-        animationController.PlayState(BossAnimationController.BossState.Walk);
-        StartCoroutine(SkillLoop());
+        yield return new WaitForSeconds(sec);
+        bornFinished = true;
+        anim.PlayWalk();
     }
 
     void Update()
     {
-        if ((isRolling || animationController.CurrentState == BossAnimationController.BossState.Walk) && player != null)
-        {
-            agent.speed = isRolling ? moveSpeed * 2f : moveSpeed;
-            agent.SetDestination(player.position);
-        }
-    }
+        if (!bornFinished || isRolling || isSummoning) return;
 
-    IEnumerator SkillLoop()
-    {
-        while (currentHealth > 0)
+        // 追踪玩家
+        agent.SetDestination(player.position);
+
+        // 计时
+        rollTimer += Time.deltaTime;
+        summonTimer += Time.deltaTime;
+
+        // 技能触发优先级：Roll > Summon
+        if (rollTimer >= rollCooldown)
         {
-            yield return new WaitForSeconds(Random.Range(4f, 7f));
-            if (!isRolling && !isSummoning)
-            {
-                if (Random.value < 0.5f)
-                    StartCoroutine(DoRoll());
-                else
-                    StartCoroutine(DoSummon());
-            }
+            rollTimer = 0;
+            StartCoroutine(DoRoll());
+        }
+        else if (summonTimer >= summonCooldown)
+        {
+            summonTimer = 0;
+            StartCoroutine(DoSummon());
         }
     }
 
     IEnumerator DoRoll()
     {
         isRolling = true;
-        rollHit = false;
-        animationController.PlayState(BossAnimationController.BossState.Roll);
+        anim.PlayRoll();
+        // 粉尘粒子
+        if (rollDustEffect != null)
+            Instantiate(rollDustEffect, transform.position, Quaternion.identity).Play();
 
-        while (!rollHit)
+        float startSpeed = agent.speed;
+        agent.speed *= 2f;
+
+        // 持续追踪直到撞到玩家
+        while (Vector3.Distance(transform.position, player.position) > 1.5f)
         {
+            agent.SetDestination(player.position);
             yield return null;
         }
 
+        // 撞击伤害 + 爆粉粒子
+        PlayerHealthController ph = player.GetComponent<PlayerHealthController>();
+        if (ph != null && !ph.IsDead())
+            ph.DamagePlayer(rollDamage);
+
+        if (rollDustEffect != null)
+            Instantiate(rollDustEffect, player.position, Quaternion.identity).Play();
+
+        // 恢复
+        agent.speed = startSpeed;
         isRolling = false;
-        animationController.PlayState(BossAnimationController.BossState.Walk);
+        anim.PlayWalk();
     }
 
     IEnumerator DoSummon()
     {
         isSummoning = true;
-        animationController.PlayState(BossAnimationController.BossState.Summon);
+        anim.PlaySummon();
+        yield return new WaitForSeconds(anim.summonDuration);
 
-        yield return new WaitForSeconds(1f);
+        // 只召唤一个
+        var minion = Instantiate(dumplingMinionPrefab, transform.position + transform.forward * 1.5f, Quaternion.identity);
+        // 小饺子脚本里自行接收 player、healthPickupPrefab…
 
-        for (int i = 0; i < minionCount; i++)
-        {
-            Vector3 offset = new Vector3(Random.Range(-summonRadius, summonRadius), 0, Random.Range(-summonRadius, summonRadius));
-            Instantiate(dumplingMinionPrefab, transform.position + offset, Quaternion.identity);
-        }
-
-        if (summonEffect != null)
-            summonEffect.Play();
-
-        yield return new WaitForSeconds(1f);
         isSummoning = false;
-        animationController.PlayState(BossAnimationController.BossState.Walk);
+        anim.PlayWalk();
     }
 
-    void OnTriggerEnter(Collider other)
+    public void TakeDamage(int dmg)
     {
-        if (isRolling && other.CompareTag("Player"))
-        {
-            rollHit = true;
-        }
-    }
-
-    public void TakeDamage(int amount)
-    {
-        currentHealth -= amount;
+        currentHealth -= dmg;
         if (currentHealth <= 0)
         {
-            animationController.PlayState(BossAnimationController.BossState.Dead);
-            animationController.FadeOutAll();
+            anim.PlayState(BossAnimationController.BossState.Dead);
+            anim.FadeOutAll();
             Destroy(gameObject, 2f);
         }
     }

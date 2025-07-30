@@ -3,97 +3,93 @@ using System.Collections;
 
 public class BossAnimationController : MonoBehaviour
 {
-    public Animator bodyAnimator;
-    public Animator leftHandAnimator;
-    public Animator rightHandAnimator;
-    public Animator leftLegAnimator;
-    public Animator rightLegAnimator;
+    public Animator bodyAnim;
+    public Animator leftHandAnim;
+    public Animator rightHandAnim;
+    public Animator leftLegAnim;
+    public Animator rightLegAnim;
+
+    [Header("State Durations")]
+    public float bornDuration = 3f;
+    public float rollDuration = 2f;
+    public float summonDuration = 2f;
 
     public enum BossState { Born, Walk, Roll, Summon, Dead }
-    private BossState currentState;
-    public BossState CurrentState => currentState;
+    public BossState CurrentState { get; private set; }
+
+    void Start()
+    {
+        PlayState(BossState.Born);
+        StartCoroutine(TransitionAfter(bornDuration, BossState.Walk));
+    }
 
     public void PlayState(BossState state)
     {
-        currentState = state;
-        string action = state.ToString();
+        CurrentState = state;
+        string s = state.ToString();
 
-        switch (state)
-        {
-            case BossState.Born:
-            case BossState.Walk:
-            case BossState.Dead:
-                PlayAll(action);
-                break;
+        // 先显示/隐藏
+        bool roll = state == BossState.Roll;
+        leftHandAnim.gameObject.SetActive(!roll);
+        rightHandAnim.gameObject.SetActive(!roll);
+        leftLegAnim.gameObject.SetActive(true);
+        rightLegAnim.gameObject.SetActive(true);
 
-            case BossState.Roll:
-                PlaySingle(bodyAnimator, "Body_" + action);
-                leftHandAnimator?.gameObject.SetActive(false);
-                rightHandAnimator?.gameObject.SetActive(false);
-                leftLegAnimator?.gameObject.SetActive(false);
-                rightLegAnimator?.gameObject.SetActive(false);
-                break;
-
-            case BossState.Summon:
-                PlaySingle(bodyAnimator, "Body_" + action);
-                PlaySingle(leftHandAnimator, "LeftHand_" + action);
-                leftHandAnimator?.gameObject.SetActive(true);
-                rightHandAnimator?.gameObject.SetActive(false);
-                leftLegAnimator?.gameObject.SetActive(false);
-                rightLegAnimator?.gameObject.SetActive(false);
-                break;
-        }
+        // 播放
+        bodyAnim.Play("Body_" + s);
+        leftHandAnim.Play("LeftHand_" + s);
+        rightHandAnim.Play("RightHand_" + s);
+        leftLegAnim.Play("LeftLeg_" + s);
+        rightLegAnim.Play("RightLeg_" + s);
     }
 
-    void PlayAll(string action)
+    IEnumerator TransitionAfter(float sec, BossState next)
     {
-        PlaySingle(bodyAnimator, "Body_" + action);
-        PlaySingle(leftHandAnimator, "LeftHand_" + action);
-        PlaySingle(rightHandAnimator, "RightHand_" + action);
-        PlaySingle(leftLegAnimator, "LeftLeg_" + action);
-        PlaySingle(rightLegAnimator, "RightLeg_" + action);
-
-        leftHandAnimator?.gameObject.SetActive(true);
-        rightHandAnimator?.gameObject.SetActive(true);
-        leftLegAnimator?.gameObject.SetActive(true);
-        rightLegAnimator?.gameObject.SetActive(true);
+        yield return new WaitForSeconds(sec);
+        PlayState(next);
     }
 
-    void PlaySingle(Animator animator, string clipName)
+    /// <summary>
+    /// 用于行为脚本中手动回到Walk，重新开启随机触发
+    /// </summary>
+    public void PlayWalk()
     {
-        if (animator != null)
-        {
-            animator.Play(clipName);
-        }
+        PlayState(BossState.Walk);
+    }
+
+    public void PlayRoll()
+    {
+        PlayState(BossState.Roll);
+    }
+
+    public void PlaySummon()
+    {
+        PlayState(BossState.Summon);
     }
 
     public void FadeOutAll(float duration = 1f)
     {
-        StartCoroutine(FadeOutLimb(bodyAnimator.gameObject, duration));
-        StartCoroutine(FadeOutLimb(leftHandAnimator.gameObject, duration));
-        StartCoroutine(FadeOutLimb(rightHandAnimator.gameObject, duration));
-        StartCoroutine(FadeOutLimb(leftLegAnimator.gameObject, duration));
-        StartCoroutine(FadeOutLimb(rightLegAnimator.gameObject, duration));
+        StartCoroutine(FadeOut(bodyAnim.gameObject, duration));
+        StartCoroutine(FadeOut(leftHandAnim.gameObject, duration));
+        StartCoroutine(FadeOut(rightHandAnim.gameObject, duration));
+        StartCoroutine(FadeOut(leftLegAnim.gameObject, duration));
+        StartCoroutine(FadeOut(rightLegAnim.gameObject, duration));
     }
 
-    IEnumerator FadeOutLimb(GameObject obj, float duration)
+    IEnumerator FadeOut(GameObject go, float duration)
     {
-        Renderer rend = obj.GetComponent<Renderer>();
-        if (rend == null) yield break;
-
-        Material mat = rend.material;
-        Color original = mat.color;
-
+        var rends = go.GetComponentsInChildren<Renderer>();
         float t = 0f;
         while (t < duration)
         {
-            float alpha = Mathf.Lerp(1f, 0f, t / duration);
-            mat.color = new Color(original.r, original.g, original.b, alpha);
+            foreach (var r in rends)
+            {
+                Color c = r.material.color;
+                c.a = Mathf.Lerp(1, 0, t / duration);
+                r.material.color = c;
+            }
             t += Time.deltaTime;
             yield return null;
         }
-
-        mat.color = new Color(original.r, original.g, original.b, 0f);
-        Destroy(obj); // 或 setActive(false)
     }
 }
