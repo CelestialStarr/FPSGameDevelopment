@@ -35,6 +35,9 @@ public class BullerController : MonoBehaviour
 
     void Update()
     {
+        // 添加空值检查防止错误
+        if (this == null || gameObject == null) return;
+
         // Alternative movement if no Rigidbody
         if (rb == null)
         {
@@ -51,7 +54,8 @@ public class BullerController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (hasHit) return; // Prevent multiple triggers
+        // 添加空值检查防止错误
+        if (hasHit || this == null || gameObject == null) return;
 
         Debug.Log($"Bullet hit: {other.gameObject.name} (Tag: {other.tag})");
 
@@ -129,6 +133,9 @@ public class BullerController : MonoBehaviour
 
     void CreateImpactEffect()
     {
+        // 添加空值检查
+        if (gameObject == null) return;
+
         if (laserImpact != null)
         {
             // Calculate impact position slightly back from bullet position
@@ -156,6 +163,9 @@ public class BullerController : MonoBehaviour
 
     void DestroyBullet()
     {
+        // 添加空值检查防止错误
+        if (gameObject == null) return;
+
         hasHit = true;
 
         // Stop movement
@@ -171,8 +181,11 @@ public class BullerController : MonoBehaviour
             col.enabled = false;
         }
 
-        // Destroy bullet
-        Destroy(gameObject, 0.1f);
+        // 安全销毁
+        if (gameObject != null)
+        {
+            Destroy(gameObject, 0.1f);
+        }
     }
 
     // Public methods to set bullet properties
