@@ -28,14 +28,15 @@ public class BossAnimationController : MonoBehaviour
         CurrentState = state;
         string s = state.ToString();
 
-        // 先显示/隐藏
-        bool roll = state == BossState.Roll;
-        leftHandAnim.gameObject.SetActive(!roll);
-        rightHandAnim.gameObject.SetActive(!roll);
-        leftLegAnim.gameObject.SetActive(true);
-        rightLegAnim.gameObject.SetActive(true);
+        bool isRoll = (state == BossState.Roll);
 
-        // 播放
+        // Roll 时隐藏手脚，否则全部显示
+        leftHandAnim.gameObject.SetActive(!isRoll);
+        rightHandAnim.gameObject.SetActive(!isRoll);
+        leftLegAnim.gameObject.SetActive(!isRoll);
+        rightLegAnim.gameObject.SetActive(!isRoll);
+
+        // 播放对应状态的 Animation Clip
         bodyAnim.Play("Body_" + s);
         leftHandAnim.Play("LeftHand_" + s);
         rightHandAnim.Play("RightHand_" + s);
@@ -50,7 +51,7 @@ public class BossAnimationController : MonoBehaviour
     }
 
     /// <summary>
-    /// 用于行为脚本中手动回到Walk，重新开启随机触发
+    /// 行为脚本调用，用于回到 Walk 状态
     /// </summary>
     public void PlayWalk()
     {
@@ -85,7 +86,7 @@ public class BossAnimationController : MonoBehaviour
             foreach (var r in rends)
             {
                 Color c = r.material.color;
-                c.a = Mathf.Lerp(1, 0, t / duration);
+                c.a = Mathf.Lerp(1f, 0f, t / duration);
                 r.material.color = c;
             }
             t += Time.deltaTime;
