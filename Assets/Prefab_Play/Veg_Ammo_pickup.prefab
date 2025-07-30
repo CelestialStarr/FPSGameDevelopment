@@ -253,7 +253,7 @@ MonoBehaviour:
   successMessageDuration: 1.5
   errorMessageDuration: 2
   pickupEffect: {fileID: 0}
-  pickupSound: {fileID: 0}
+  pickupSound: {fileID: 8300000, guid: fa1a35ce7f9496947a1ab578b708ad18, type: 3}
   rotationSpeed: 50
   carrotColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   meatColor: {r: 1, g: 0, b: 0, a: 1}

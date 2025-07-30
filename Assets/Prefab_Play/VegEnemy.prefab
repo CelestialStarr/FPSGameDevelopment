@@ -375,7 +375,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1693808699783951923, guid: 36b9600c06033664a9fa496045a45d5e, type: 3}
       propertyPath: dropChance
-      value: 0.36
+      value: 0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 1693808699783951923, guid: 36b9600c06033664a9fa496045a45d5e, type: 3}
+      propertyPath: dropHeight
+      value: -0.5
       objectReference: {fileID: 0}
     - target: {fileID: 1693808699783951923, guid: 36b9600c06033664a9fa496045a45d5e, type: 3}
       propertyPath: hurtColor.b
@@ -391,8 +395,16 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1693808699783951923, guid: 36b9600c06033664a9fa496045a45d5e, type: 3}
       propertyPath: possibleDrops.Array.size
-      value: 0
+      value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 1693808699783951923, guid: 36b9600c06033664a9fa496045a45d5e, type: 3}
+      propertyPath: 'possibleDrops.Array.data[0]'
+      value: 
+      objectReference: {fileID: 4785710367606536277, guid: 09891ebc4a2fa5d48b78ef1701d11cda, type: 3}
+    - target: {fileID: 1693808699783951923, guid: 36b9600c06033664a9fa496045a45d5e, type: 3}
+      propertyPath: 'possibleDrops.Array.data[1]'
+      value: 
+      objectReference: {fileID: 8830148768490463293, guid: 24577a5ea6bfe0145841432cf624af46, type: 3}
     - target: {fileID: 2022318228012602940, guid: 36b9600c06033664a9fa496045a45d5e, type: 3}
       propertyPath: m_Height
       value: 2.0973358
@@ -487,7 +499,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8176558691619636339, guid: 36b9600c06033664a9fa496045a45d5e, type: 3}
       propertyPath: m_Name
-      value: VegEnemy Variant
+      value: VegEnemy
       objectReference: {fileID: 0}
     - target: {fileID: 8176558691619636339, guid: 36b9600c06033664a9fa496045a45d5e, type: 3}
       propertyPath: m_IsActive
