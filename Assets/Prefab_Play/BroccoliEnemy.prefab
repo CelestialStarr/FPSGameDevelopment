@@ -500,7 +500,8 @@ MonoBehaviour:
   maxHealth: 50
   currentHealth: 5
   invulnerabilityTime: 0.1
-  possibleDrops: []
+  possibleDrops:
+  - {fileID: 8091977197847018892, guid: 63b3c061ecde2974084544391cd57789, type: 3}
   dropChance: 0.36
   dropHeight: 0.2
   deathEffect: {fileID: 0}
