@@ -318,10 +318,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   player: {fileID: 0}
   doughBall: {fileID: 7656790241176678602}
-  wrapOverlayUI: {fileID: 640254695358703142}
-  detectRange: 10
+  detectRange: 18
   wrapRange: 2
-  moveSpeed: 1.5
+  moveSpeed: 3
+  wrapOverlayUI: {fileID: 640254695358703142}
+  overlayDuration: 5
+  damageToPlayerRate: 1
+  damageToPlayerAmount: 8
 --- !u!135 &244518563442677808
 SphereCollider:
   m_ObjectHideFlags: 0
