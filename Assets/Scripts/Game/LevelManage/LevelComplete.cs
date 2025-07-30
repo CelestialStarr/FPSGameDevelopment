@@ -24,7 +24,7 @@ public class LevelComplete : MonoBehaviour
         Instance = this;
 
         // 可选：如果需要跨场景保持，取消注释下一行
-         //DontDestroyOnLoad(gameObject);
+        //DontDestroyOnLoad(gameObject);
     }
 
     void Start()
@@ -45,6 +45,29 @@ public class LevelComplete : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.L))
         {
             ShowLevelCompleteUI();
+        }
+
+        // 添加N键测试
+        if (Input.GetKeyDown(KeyCode.N) && isShowing)
+        {
+            Debug.Log("N键测试跳转");
+            OnNextLevelClicked();
+        }
+
+        // 添加调试信息
+        if (isShowing && Input.GetKeyDown(KeyCode.I))
+        {
+            Debug.Log("=== UI调试信息 ===");
+            Debug.Log($"按钮存在: {nextLevelButton != null}");
+            if (nextLevelButton != null)
+            {
+                Debug.Log($"按钮激活: {nextLevelButton.gameObject.activeInHierarchy}");
+                Debug.Log($"按钮可交互: {nextLevelButton.interactable}");
+            }
+            Debug.Log($"Time.timeScale: {Time.timeScale}");
+            Debug.Log($"鼠标可见: {Cursor.visible}");
+            Debug.Log($"鼠标锁定: {Cursor.lockState}");
+            Debug.Log($"EventSystem存在: {UnityEngine.EventSystems.EventSystem.current != null}");
         }
     }
 
@@ -73,12 +96,27 @@ public class LevelComplete : MonoBehaviour
 
         // 确保按钮可交互
         if (nextLevelButton != null)
+        {
             nextLevelButton.interactable = true;
+            Debug.Log($"按钮设置完成: 激活={nextLevelButton.gameObject.activeInHierarchy}, 可交互={nextLevelButton.interactable}");
+        }
 
         // 设置游戏状态
         Time.timeScale = 0f;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+
+        Debug.Log($"结算界面显示完成 - Time.timeScale: {Time.timeScale}, 鼠标可见: {Cursor.visible}");
+
+        // 检查EventSystem
+        if (UnityEngine.EventSystems.EventSystem.current == null)
+        {
+            Debug.LogError("EventSystem不存在！UI无法点击！");
+        }
+        else
+        {
+            Debug.Log("EventSystem正常");
+        }
     }
 
     private void UpdateTimeDisplay()
@@ -110,7 +148,13 @@ public class LevelComplete : MonoBehaviour
 
     public void OnNextLevelClicked()
     {
-        if (!isShowing) return;
+        Debug.Log("=== 按钮被点击了！ ===");
+
+        if (!isShowing)
+        {
+            Debug.Log("isShowing为false，提前返回");
+            return;
+        }
 
         isShowing = false;
         Time.timeScale = 1f;
