@@ -1004,6 +1004,88 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1840446540}
   m_CullTransparentMesh: 1
+--- !u!1 &1841591888
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1841591889}
+  - component: {fileID: 1841591890}
+  m_Layer: 0
+  m_Name: MissionSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1841591889
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1841591888}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 65.05847, y: 116.46028, z: 77.70061}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1841591890
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1841591888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b01a1da4e7f94740942dac46b1525bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  missionPanel: {fileID: 0}
+  missionTitleText: {fileID: 0}
+  missionListParent: {fileID: 0}
+  missionItemPrefab: {fileID: 0}
+  missionTextFontSize: 50
+  missionItemHeight: 60
+  missionItemSpacing: 65
+  missionStartPosition: {x: -200, y: 50}
+  missionTextColor: {r: 1, g: 1, b: 1, a: 1}
+  missionCompletedColor: {r: 0, g: 1, b: 0, a: 1}
+  textAlignment: 3
+  level1_KillsRequired: 5
+  level1_CornAmmoRequired: 3
+  level1_MeatAmmoRequired: 2
+  level1_VegetableAmmoRequired: 1
+  level1_ShowKillTask: 1
+  level1_ShowCornTask: 1
+  level1_ShowMeatTask: 1
+  level1_ShowVegetableTask: 1
+  level2_KillsRequired: 10
+  level2_CornAmmoRequired: 5
+  level2_MeatAmmoRequired: 3
+  level2_VegetableAmmoRequired: 2
+  level2_ShowKillTask: 1
+  level2_ShowCornTask: 1
+  level2_ShowMeatTask: 1
+  level2_ShowVegetableTask: 1
+  level3_KillsRequired: 15
+  level3_CornAmmoRequired: 8
+  level3_MeatAmmoRequired: 5
+  level3_VegetableAmmoRequired: 3
+  level3_BossRequired: 1
+  level3_ShowKillTask: 1
+  level3_ShowCornTask: 1
+  level3_ShowMeatTask: 1
+  level3_ShowVegetableTask: 1
+  level3_ShowBossTask: 1
+  currentScene: 3
 --- !u!1 &1895394856
 GameObject:
   m_ObjectHideFlags: 0
@@ -1390,3 +1472,4 @@ SceneRoots:
   - {fileID: 590149757}
   - {fileID: 2062957089}
   - {fileID: 1463887162}
+  - {fileID: 1841591889}
