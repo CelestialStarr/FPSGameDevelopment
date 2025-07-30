@@ -60,7 +60,37 @@ public class TeleportSystem : MonoBehaviour
 
     void CheckPlayerNearTeleportPoints()
     {
-        // 检查PlayerController是否存在
+        // 如果传送点为空，尝试重新查找
+        if (pointA == null || pointB == null)
+        {
+            Debug.Log("传送点为空，开始查找...");
+
+            // 查找所有包含"teleport"的对象
+            GameObject[] allObjects = FindObjectsOfType<GameObject>();
+            Debug.Log($"场景中总共有 {allObjects.Length} 个对象");
+
+            foreach (GameObject obj in allObjects)
+            {
+                if (obj.name.ToLower().Contains("teleport"))
+                {
+                    Debug.Log($"找到传送相关对象: {obj.name}");
+                }
+            }
+
+            // 尝试通过名称查找
+            GameObject pointAObj = GameObject.Find("TeleportPointA");
+            GameObject pointBObj = GameObject.Find("TeleportPointB");
+
+            Debug.Log($"按名称查找结果: A={pointAObj != null}, B={pointBObj != null}");
+
+            if (pointAObj != null) pointA = pointAObj.transform;
+            if (pointBObj != null) pointB = pointBObj.transform;
+        }
+
+        // 每次都打印当前状态
+        Debug.Log($"当前传送点状态: A={pointA != null}, B={pointB != null}");
+
+        // 原来的代码...
         if (PlayerController.instance == null)
         {
             isNearTeleportPoint = false;
@@ -79,15 +109,14 @@ public class TeleportSystem : MonoBehaviour
             return;
         }
 
+        // 原来的距离检查代码...
         Vector3 playerPos = PlayerController.instance.transform.position;
         bool wasNear = isNearTeleportPoint;
         Transform previousNearest = nearestTeleportPoint;
 
-        // Check distance to both points
         float distanceToA = Vector3.Distance(playerPos, pointA.position);
         float distanceToB = Vector3.Distance(playerPos, pointB.position);
 
-        // Find nearest point within range
         if (distanceToA <= teleportRange && distanceToA <= distanceToB)
         {
             isNearTeleportPoint = true;
@@ -104,7 +133,6 @@ public class TeleportSystem : MonoBehaviour
             nearestTeleportPoint = null;
         }
 
-        // Update UI if status changed
         if (wasNear != isNearTeleportPoint || previousNearest != nearestTeleportPoint)
         {
             UpdateTeleportPromptUI();
