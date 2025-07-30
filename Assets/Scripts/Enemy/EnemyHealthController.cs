@@ -1,23 +1,26 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class EnemyHealthController : MonoBehaviour
 {
     [Header("Health Settings")]
     public int maxHealth = 50;
     public int currentHealth;
-    public float invulnerabilityTime = 0.1f; // ÊÜÉËºóµÄÎŞµĞÊ±¼ä
+    public float invulnerabilityTime = 0.1f; // å—ä¼¤åçš„æ— æ•Œæ—¶é—´
 
     [Header("Death Settings")]
-    public GameObject[] possibleDrops;      // ¿ÉÄÜµôÂäµÄÎïÆ·£¨×Óµ¯°üµÈ£©
-    public float dropChance = 0.7f;         // µôÂä¸ÅÂÊ
+    public GameObject[] possibleDrops;      // å¯èƒ½æ‰è½çš„ç‰©å“ï¼ˆå­å¼¹åŒ…ç­‰ï¼‰
+    public float dropChance = 0.7f;         // æ‰è½æ¦‚ç‡
     public float dropHeight = 0.2f;
-    public GameObject deathEffect;          // ËÀÍöÌØĞ§
-    public AudioClip hurtSound;             // ÊÜÉËÒôĞ§
-    public AudioClip deathSound;            // ËÀÍöÒôĞ§
+    public GameObject deathEffect;          // æ­»äº¡ç‰¹æ•ˆ
+    public AudioClip hurtSound;             // å—ä¼¤éŸ³æ•ˆ
+    public AudioClip deathSound;            // æ­»äº¡éŸ³æ•ˆ
 
     [Header("Visual Feedback")]
-    public float hurtFlashDuration = 0.1f;  // ÊÜÉËÉÁË¸Ê±¼ä
-    public Color hurtColor = Color.red;     // ÊÜÉËÊ±µÄÑÕÉ«
+    public float hurtFlashDuration = 0.1f;  // å—ä¼¤é—ªçƒæ—¶é—´
+    public Color hurtColor = Color.red;     // å—ä¼¤æ—¶çš„é¢œè‰²
+
+    [Header("Boss Settings")]
+    public bool isBoss = false;
 
     // Private variables
     private float invulnerabilityCounter = 0f;
@@ -27,19 +30,19 @@ public class EnemyHealthController : MonoBehaviour
     private Color originalColor;
     private Material originalMaterial;
 
-    // ÒıÓÃ³öÉúÏµÍ³
+    // å¼•ç”¨å‡ºç”Ÿç³»ç»Ÿ
     private EnemySpawner parentSpawner;
     private WaveManager waveManager;
 
     void Start()
     {
-        // ³õÊ¼»¯ÑªÁ¿
+        // åˆå§‹åŒ–è¡€é‡
         if (currentHealth <= 0)
         {
             currentHealth = maxHealth;
         }
 
-        // »ñÈ¡×é¼ş
+        // è·å–ç»„ä»¶
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
         {
@@ -53,14 +56,14 @@ public class EnemyHealthController : MonoBehaviour
             originalColor = originalMaterial.color;
         }
 
-        // ²éÕÒ³öÉúÏµÍ³ÒıÓÃ
+        // æŸ¥æ‰¾å‡ºç”Ÿç³»ç»Ÿå¼•ç”¨
         waveManager = FindObjectOfType<WaveManager>();
-        // parentSpawner ¿ÉÒÔÔÚ³öÉúÊ±ÉèÖÃ£¬»òÕßÍ¨¹ıÆäËû·½Ê½»ñÈ¡
+        // parentSpawner å¯ä»¥åœ¨å‡ºç”Ÿæ—¶è®¾ç½®ï¼Œæˆ–è€…é€šè¿‡å…¶ä»–æ–¹å¼è·å–
     }
 
     void Update()
     {
-        // ¸üĞÂÎŞµĞÊ±¼ä
+        // æ›´æ–°æ— æ•Œæ—¶é—´
         if (invulnerabilityCounter > 0)
         {
             invulnerabilityCounter -= Time.deltaTime;
@@ -69,30 +72,30 @@ public class EnemyHealthController : MonoBehaviour
 
     public void DamageEnemy(int bulletDamage)
     {
-        // ¼ì²éÊÇ·ñÔÚÎŞµĞÊ±¼äÄÚ»òÒÑËÀÍö
+        // æ£€æŸ¥æ˜¯å¦åœ¨æ— æ•Œæ—¶é—´å†…æˆ–å·²æ­»äº¡
         if (invulnerabilityCounter > 0 || isDead)
         {
             return;
         }
 
-        // ¿Û³ıÑªÁ¿
+        // æ‰£é™¤è¡€é‡
         currentHealth -= bulletDamage;
 
-        // ÉèÖÃÎŞµĞÊ±¼ä
+        // è®¾ç½®æ— æ•Œæ—¶é—´
         invulnerabilityCounter = invulnerabilityTime;
 
-        // ²¥·ÅÊÜÉËÒôĞ§
+        // æ’­æ”¾å—ä¼¤éŸ³æ•ˆ
         if (hurtSound != null && audioSource != null)
         {
             audioSource.PlayOneShot(hurtSound);
         }
 
-        // ÊÜÉËÊÓ¾õ·´À¡
+        // å—ä¼¤è§†è§‰åé¦ˆ
         StartCoroutine(HurtFlash());
 
         Debug.Log($"{gameObject.name} took {bulletDamage} damage. Health: {currentHealth}/{maxHealth}");
 
-        // ¼ì²éÊÇ·ñËÀÍö
+        // æ£€æŸ¥æ˜¯å¦æ­»äº¡
         if (currentHealth <= 0)
         {
             Die();
@@ -103,14 +106,14 @@ public class EnemyHealthController : MonoBehaviour
     {
         if (enemyRenderer != null)
         {
-            // ±äºì
+            // å˜çº¢
             enemyRenderer.material.color = hurtColor;
 
-            // µÈ´ı
+            // ç­‰å¾…
             yield return new WaitForSeconds(hurtFlashDuration);
 
-            // »Ö¸´Ô­É«
-            if (enemyRenderer != null) // È·±£µĞÈË»¹Ã»±»Ïú»Ù
+            // æ¢å¤åŸè‰²
+            if (enemyRenderer != null) // ç¡®ä¿æ•Œäººè¿˜æ²¡è¢«é”€æ¯
             {
                 enemyRenderer.material.color = originalColor;
             }
@@ -120,31 +123,29 @@ public class EnemyHealthController : MonoBehaviour
     void Die()
     {
         if (isDead) return;
-
         isDead = true;
-
         Debug.Log($"{gameObject.name} died!");
 
-        // ²¥·ÅËÀÍöÒôĞ§
+        // æ’­æ”¾æ­»äº¡éŸ³æ•ˆ
         if (deathSound != null && audioSource != null)
         {
             audioSource.PlayOneShot(deathSound);
         }
 
-        // Éú³ÉËÀÍöÌØĞ§
+        // ç”Ÿæˆæ­»äº¡ç‰¹æ•ˆ
         if (deathEffect != null)
         {
             GameObject effect = Instantiate(deathEffect, transform.position, Quaternion.identity);
             Destroy(effect, 3f);
         }
 
-        // ´¦ÀíµôÂäÎïÆ·
+        // å¤„ç†æ‰è½ç‰©å“
         HandleDrops();
 
-        // Í¨Öª³öÉúÏµÍ³
+        // é€šçŸ¥å‡ºç”Ÿç³»ç»Ÿ
         NotifySpawnSystem();
 
-        // ½ûÓÃµĞÈË×é¼şµ«±£ÁôÎïÌåÒ»Ğ¡¶ÎÊ±¼ä£¨ÓÃÓÚÒôĞ§²¥·Å£©
+        // ç¦ç”¨æ•Œäººç»„ä»¶ä½†ä¿ç•™ç‰©ä½“ä¸€å°æ®µæ—¶é—´ï¼ˆç”¨äºéŸ³æ•ˆæ’­æ”¾ï¼‰
         DisableEnemyComponents();
 
         DumplingEnemy dumplingScript = GetComponent<DumplingEnemy>();
@@ -153,7 +154,19 @@ public class EnemyHealthController : MonoBehaviour
             dumplingScript.OnEnemyDeath();
         }
 
-        // ÑÓ³ÙÏú»Ù
+        // é€šçŸ¥ä»»åŠ¡ç³»ç»Ÿ
+        if (isBoss && MissionSystem.Instance != null)
+        {
+            MissionSystem.Instance.OnBossDefeated();
+            Debug.Log("[Enemy] Boss defeated! Mission system notified.");
+        }
+        else if (MissionSystem.Instance != null)
+        {
+            MissionSystem.Instance.OnEnemyKilled();
+            Debug.Log("[Enemy] Enemy killed! Mission system notified.");
+        }
+
+        // å»¶è¿Ÿé”€æ¯
         Destroy(gameObject, 1f);
     }
 
@@ -161,20 +174,20 @@ public class EnemyHealthController : MonoBehaviour
     {
         if (possibleDrops.Length > 0 && Random.value < dropChance)
         {
-            // Ëæ»úÑ¡ÔñµôÂäÎïÆ·
+            // éšæœºé€‰æ‹©æ‰è½ç‰©å“
             int randomIndex = Random.Range(0, possibleDrops.Length);
-            Vector3 dropPosition = transform.position + Vector3.up * dropHeight; // Ê¹ÓÃ¿Éµ÷ÕûµÄµôÂä¸ß¶È
+            Vector3 dropPosition = transform.position + Vector3.up * dropHeight; // ä½¿ç”¨å¯è°ƒæ•´çš„æ‰è½é«˜åº¦
 
             GameObject droppedItem = Instantiate(possibleDrops[randomIndex], dropPosition, Quaternion.identity);
 
-            // ¸øµôÂäÎïÆ·Ò»¸ö¸üĞ¡µÄËæ»úÁ¦
+            // ç»™æ‰è½ç‰©å“ä¸€ä¸ªæ›´å°çš„éšæœºåŠ›
             Rigidbody dropRb = droppedItem.GetComponent<Rigidbody>();
             if (dropRb != null)
             {
                 Vector3 randomForce = new Vector3(
-                    Random.Range(-1f, 1f),      // ¼õĞ¡Ë®Æ½Á¦
-                    Random.Range(0.5f, 1.5f),   // ¼õĞ¡ÏòÉÏµÄÁ¦
-                    Random.Range(-1f, 1f)       // ¼õĞ¡Ë®Æ½Á¦
+                    Random.Range(-1f, 1f),      // å‡å°æ°´å¹³åŠ›
+                    Random.Range(0.5f, 1.5f),   // å‡å°å‘ä¸Šçš„åŠ›
+                    Random.Range(-1f, 1f)       // å‡å°æ°´å¹³åŠ›
                 );
                 dropRb.AddForce(randomForce, ForceMode.Impulse);
             }
@@ -185,75 +198,45 @@ public class EnemyHealthController : MonoBehaviour
 
     void NotifySpawnSystem()
     {
-        // Í¨Öª²¨´Î¹ÜÀíÆ÷µĞÈËËÀÍö
+        // é€šçŸ¥æ³¢æ¬¡ç®¡ç†å™¨æ•Œäººæ­»äº¡
         if (waveManager != null)
         {
             waveManager.OnEnemyDeath();
         }
 
-        // Í¨Öª³öÉúÆ÷µĞÈËËÀÍö
+        // é€šçŸ¥å‡ºç”Ÿå™¨æ•Œäººæ­»äº¡
         if (parentSpawner != null)
         {
             parentSpawner.OnEnemyDeath();
         }
         else
         {
-            // Èç¹ûÃ»ÓĞÖ±½ÓÒıÓÃ£¬³¢ÊÔÕÒµ½×î½üµÄ³öÉúÆ÷
+            // å¦‚æœæ²¡æœ‰ç›´æ¥å¼•ç”¨ï¼Œå°è¯•æ‰¾åˆ°æœ€è¿‘çš„å‡ºç”Ÿå™¨
             EnemySpawner[] spawners = FindObjectsOfType<EnemySpawner>();
             if (spawners.Length > 0)
             {
                 spawners[0].OnEnemyDeath();
             }
         }
-
-        // É¾³ıÕâÁ½¶Î´úÂë£¬ÒòÎªÎÒÃÇ¸Ä³É»ùÓÚÊ±¼ä´¥·¢ÁË£º
-
-        // // Í¨Öª´«ËÍÏµÍ³µĞÈËËÀÍö
-        // KillBasedTeleportSystem teleportSystem = FindObjectOfType<KillBasedTeleportSystem>();
-        // if (teleportSystem != null)
-        // {
-        //     teleportSystem.OnEnemyKilled();
-        //     Debug.Log("Notified teleport system of enemy death!");
-        // }
-        // else
-        // {
-        //     Debug.LogWarning("Could not find KillBasedTeleportSystem in scene!");
-        // }
-
-        // // Ìí¼ÓÕâ¸ö£ºÍ¨Öª¹ÊÊÂÏµÍ³µĞÈËËÀÍö
-        // if (SimpleStorySystem.Instance != null)
-        // {
-        //     SimpleStorySystem.Instance.OnEnemyKilled();
-        //     Debug.Log("Notified story system of enemy death!");
-        // }
-        // else
-        // {
-        //     Debug.LogWarning("Could not find SimpleStorySystem in scene!");
-        // }
-
-        // Èç¹ûÄã»¹ÓĞÈÎÎñÏµÍ³ĞèÒª»÷É±¼ÆÊı£¬¿ÉÒÔ±£ÁôÕâ¸ö£º
-        if (MissionSystem.Instance != null)
-        {
-            MissionSystem.Instance.OnEnemyKilled();
-        }
     }
+
     void DisableEnemyComponents()
     {
-        // ½ûÓÃAIºÍÒÆ¶¯
+        // ç¦ç”¨AIå’Œç§»åŠ¨
         EnemyController controller = GetComponent<EnemyController>();
         if (controller != null)
         {
             controller.enabled = false;
         }
 
-        // ½ûÓÃµ¼º½
+        // ç¦ç”¨å¯¼èˆª
         UnityEngine.AI.NavMeshAgent agent = GetComponent<UnityEngine.AI.NavMeshAgent>();
         if (agent != null)
         {
             agent.enabled = false;
         }
 
-        // ½ûÓÃÅö×²£¨µ«±£ÁôTriggerÓÃÓÚµôÂäÎïÆ·¼ì²âµÈ£©
+        // ç¦ç”¨ç¢°æ’ï¼ˆä½†ä¿ç•™Triggerç”¨äºæ‰è½ç‰©å“æ£€æµ‹ç­‰ï¼‰
         Collider col = GetComponent<Collider>();
         if (col != null && !col.isTrigger)
         {
@@ -261,13 +244,13 @@ public class EnemyHealthController : MonoBehaviour
         }
     }
 
-    // ¹«¹²·½·¨£ºÉèÖÃ³öÉúÆ÷ÒıÓÃ
+    // å…¬å…±æ–¹æ³•ï¼šè®¾ç½®å‡ºç”Ÿå™¨å¼•ç”¨
     public void SetParentSpawner(EnemySpawner spawner)
     {
         parentSpawner = spawner;
     }
 
-    // ¹«¹²·½·¨£ºÖÎÁÆµĞÈË£¨Èç¹ûĞèÒª£©
+    // å…¬å…±æ–¹æ³•ï¼šæ²»ç–—æ•Œäººï¼ˆå¦‚æœéœ€è¦ï¼‰
     public void HealEnemy(int healAmount)
     {
         if (!isDead)
@@ -282,7 +265,7 @@ public class EnemyHealthController : MonoBehaviour
         }
     }
 
-    // ¹«¹²·½·¨£º»ñÈ¡ÑªÁ¿ĞÅÏ¢
+    // å…¬å…±æ–¹æ³•ï¼šè·å–è¡€é‡ä¿¡æ¯
     public float GetHealthPercentage()
     {
         return (float)currentHealth / maxHealth;

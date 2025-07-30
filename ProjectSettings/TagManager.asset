@@ -12,6 +12,7 @@ TagManager:
   - Ladder
   - Trap
   - AmmoSource
+  - Boss
   layers:
   - Default
   - TransparentFX
