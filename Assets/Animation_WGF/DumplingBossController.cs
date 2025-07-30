@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.AI;
 using System.Collections;
 
 public class BossBehaviorController : MonoBehaviour
@@ -7,22 +8,24 @@ public class BossBehaviorController : MonoBehaviour
     public Transform player;
     public float moveSpeed = 2f;
     public int maxHealth = 100;
+
     public GameObject dumplingMinionPrefab;
     public ParticleSystem summonEffect;
+    public int minionCount = 3;
+    public float summonRadius = 2f;
 
     private int currentHealth;
     private bool isRolling = false;
     private bool isSummoning = false;
     private bool rollHit = false;
-
-    private Rigidbody rb;
+    private NavMeshAgent agent;
 
     void Start()
     {
         if (player == null)
             player = GameObject.FindGameObjectWithTag("Player").transform;
 
-        rb = GetComponent<Rigidbody>();
+        agent = GetComponent<NavMeshAgent>();
         currentHealth = maxHealth;
 
         animationController.PlayState(BossAnimationController.BossState.Born);
@@ -39,8 +42,8 @@ public class BossBehaviorController : MonoBehaviour
     {
         if ((isRolling || animationController.CurrentState == BossAnimationController.BossState.Walk) && player != null)
         {
-            Vector3 dir = (player.position - transform.position).normalized;
-            transform.position += dir * moveSpeed * (isRolling ? 2f : 1f) * Time.deltaTime;
+            agent.speed = isRolling ? moveSpeed * 2f : moveSpeed;
+            agent.SetDestination(player.position);
         }
     }
 
@@ -49,11 +52,9 @@ public class BossBehaviorController : MonoBehaviour
         while (currentHealth > 0)
         {
             yield return new WaitForSeconds(Random.Range(4f, 7f));
-
             if (!isRolling && !isSummoning)
             {
-                int skill = Random.Range(0, 2);
-                if (skill == 0)
+                if (Random.value < 0.5f)
                     StartCoroutine(DoRoll());
                 else
                     StartCoroutine(DoSummon());
@@ -67,7 +68,6 @@ public class BossBehaviorController : MonoBehaviour
         rollHit = false;
         animationController.PlayState(BossAnimationController.BossState.Roll);
 
-        // µÈ´ýÅö×²´¥·¢ rollHit = true
         while (!rollHit)
         {
             yield return null;
@@ -84,18 +84,16 @@ public class BossBehaviorController : MonoBehaviour
 
         yield return new WaitForSeconds(1f);
 
-        if (dumplingMinionPrefab != null)
+        for (int i = 0; i < minionCount; i++)
         {
-            Instantiate(dumplingMinionPrefab, transform.position + transform.forward * 1.5f, Quaternion.identity);
+            Vector3 offset = new Vector3(Random.Range(-summonRadius, summonRadius), 0, Random.Range(-summonRadius, summonRadius));
+            Instantiate(dumplingMinionPrefab, transform.position + offset, Quaternion.identity);
         }
 
         if (summonEffect != null)
-        {
             summonEffect.Play();
-        }
 
         yield return new WaitForSeconds(1f);
-
         isSummoning = false;
         animationController.PlayState(BossAnimationController.BossState.Walk);
     }
@@ -114,6 +112,7 @@ public class BossBehaviorController : MonoBehaviour
         if (currentHealth <= 0)
         {
             animationController.PlayState(BossAnimationController.BossState.Dead);
+            animationController.FadeOutAll();
             Destroy(gameObject, 2f);
         }
     }
