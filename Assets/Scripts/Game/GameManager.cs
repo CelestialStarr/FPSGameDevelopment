@@ -176,12 +176,14 @@ public class GameManager : MonoBehaviour
 
     public void LoadLevel2()
     {
-        LoadLevel(2);
+        ForceResumeGame();  // 添加这行
+        SceneManager.LoadScene("Level2");
     }
 
     public void LoadLevel3()
     {
-        LoadLevel(3);
+        ForceResumeGame();  // 添加这行
+        SceneManager.LoadScene("Level3");
     }
 
     public void LoadCutScene()

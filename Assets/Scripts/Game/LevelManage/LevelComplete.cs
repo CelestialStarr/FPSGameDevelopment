@@ -118,25 +118,24 @@ public class LevelComplete : MonoBehaviour
         if (levelCompletePanel != null)
             levelCompletePanel.SetActive(false);
 
-        // 直接用GameManager，删除LevelTimer的调用
         string currentScene = SceneManager.GetActiveScene().name;
+        Debug.Log($"当前场景: {currentScene}");
 
-        Debug.Log($"当前场景: {currentScene}"); // 调试用
-
+        // 直接用SceneManager，不依赖GameManager
         if (currentScene == "Level1")
         {
             Debug.Log("跳转到Level2");
-            GameManager.Instance.LoadLevel2();
+            SceneManager.LoadScene("Level2");
         }
         else if (currentScene == "Level2")
         {
             Debug.Log("跳转到Level3");
-            GameManager.Instance.LoadLevel3();
+            SceneManager.LoadScene("Level3");
         }
         else if (currentScene == "Level3")
         {
             Debug.Log("跳转到CutScene");
-            GameManager.Instance.LoadCutScene();
+            SceneManager.LoadScene("CutScene");
         }
         else
         {
