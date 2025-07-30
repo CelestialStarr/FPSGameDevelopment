@@ -21,6 +21,10 @@ public class BossBehaviorController : MonoBehaviour
     public float summonCooldown = 8f;
     public float rollCooldown = 5f;
 
+    [Header("Roll Detection")]
+    public float rollHitRadius = 1.5f;       // 检测半径
+    public LayerMask playerLayerMask;       // 把玩家放到专用 Layer，然后在 Inspector 里选中
+
     private int currentHealth;
     private bool isRolling, isSummoning;
     private float summonTimer, rollTimer;
@@ -31,6 +35,7 @@ public class BossBehaviorController : MonoBehaviour
         currentHealth = maxHealth;
         if (player == null)
             player = GameObject.FindGameObjectWithTag("Player").transform;
+
         anim.PlayState(BossAnimationController.BossState.Born);
         StartCoroutine(StartAfter(anim.bornDuration));
     }
@@ -49,19 +54,19 @@ public class BossBehaviorController : MonoBehaviour
         // 追踪玩家
         agent.SetDestination(player.position);
 
-        // 计时
+        // 冷却计时
         rollTimer += Time.deltaTime;
         summonTimer += Time.deltaTime;
 
-        // 技能触发优先级：Roll > Summon
+        // 优先 Roll
         if (rollTimer >= rollCooldown)
         {
-            rollTimer = 0;
+            rollTimer = 0f;
             StartCoroutine(DoRoll());
         }
         else if (summonTimer >= summonCooldown)
         {
-            summonTimer = 0;
+            summonTimer = 0f;
             StartCoroutine(DoSummon());
         }
     }
@@ -70,30 +75,39 @@ public class BossBehaviorController : MonoBehaviour
     {
         isRolling = true;
         anim.PlayRoll();
-        // 粉尘粒子
+
+        // 粉尘特效
         if (rollDustEffect != null)
             Instantiate(rollDustEffect, transform.position, Quaternion.identity).Play();
 
-        float startSpeed = agent.speed;
-        agent.speed *= 2f;
+        // 暂时加速
+        float oldSpeed = agent.speed;
+        agent.speed = oldSpeed * 2f;
 
-        // 持续追踪直到撞到玩家
-        while (Vector3.Distance(transform.position, player.position) > 1.5f)
+        // 等待直到半径检测到玩家
+        while (true)
         {
+            // Physics.CheckSphere 返回是否有符合 playerLayerMask 的碰撞体
+            if (Physics.CheckSphere(transform.position, rollHitRadius, playerLayerMask))
+            {
+                // 命中玩家
+                var ph = player.GetComponent<PlayerHealthController>();
+                if (ph != null && !ph.IsDead())
+                    ph.DamagePlayer(rollDamage);
+
+                // 再来一次粉尘爆炸在玩家处
+                if (rollDustEffect != null)
+                    Instantiate(rollDustEffect, player.position, Quaternion.identity).Play();
+
+                break;
+            }
+            // 持续追踪
             agent.SetDestination(player.position);
             yield return null;
         }
 
-        // 撞击伤害 + 爆粉粒子
-        PlayerHealthController ph = player.GetComponent<PlayerHealthController>();
-        if (ph != null && !ph.IsDead())
-            ph.DamagePlayer(rollDamage);
-
-        if (rollDustEffect != null)
-            Instantiate(rollDustEffect, player.position, Quaternion.identity).Play();
-
         // 恢复
-        agent.speed = startSpeed;
+        agent.speed = oldSpeed;
         isRolling = false;
         anim.PlayWalk();
     }
@@ -105,8 +119,7 @@ public class BossBehaviorController : MonoBehaviour
         yield return new WaitForSeconds(anim.summonDuration);
 
         // 只召唤一个
-        var minion = Instantiate(dumplingMinionPrefab, transform.position + transform.forward * 1.5f, Quaternion.identity);
-        // 小饺子脚本里自行接收 player、healthPickupPrefab…
+        Instantiate(dumplingMinionPrefab, transform.position + transform.forward * 1.5f, Quaternion.identity);
 
         isSummoning = false;
         anim.PlayWalk();
@@ -121,5 +134,12 @@ public class BossBehaviorController : MonoBehaviour
             anim.FadeOutAll();
             Destroy(gameObject, 2f);
         }
+    }
+
+    // 用于在 Scene 视图中可视化检测半径（可选）
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red * 0.5f;
+        Gizmos.DrawSphere(transform.position, rollHitRadius);
     }
 }
